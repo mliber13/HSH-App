@@ -1,0 +1,37 @@
+[
+  {
+    "id": "1757095962034vh9bvuod3",
+    "createdAt": "2025-09-05T18:12:42.034Z",
+    "updatedAt": "2025-09-05T18:12:42.034Z",
+    "firstName": "John",
+    "lastName": "Doe",
+    "position": "Hanger",
+    "payRate": 25,
+    "status": "active",
+    "hireDate": "2025-09-05T18:12:42.029Z",
+    "phone": "",
+    "email": "",
+    "address": "",
+    "documents": [],
+    "onboarding": {
+      "completed": false,
+      "steps": []
+    }
+  },
+  {
+    "id": "mf75p5ncrg07brlf3sq",
+    "createdAt": "2025-09-05T18:16:20.184Z",
+    "updatedAt": "2025-09-05T18:16:20.184Z",
+    "firstName": "Test",
+    "lastName": "Fella",
+    "email": "",
+    "phone": "",
+    "employeeType": "1099 Contractor",
+    "role": "Finisher",
+    "payType": "hourly",
+    "hourlyRate": 32,
+    "salaryAmount": 0,
+    "perDiem": 0,
+    "fuelAllowance": 0
+  }
+]

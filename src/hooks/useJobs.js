@@ -787,6 +787,10 @@ export function useJobs() {
   }, []);
 
   const createJob = useCallback((jobData, callback) => {
+    console.log('=== createJob called ===');
+    console.log('JobData:', jobData);
+    console.log('JobType from jobData:', jobData.jobType);
+    
     const newJob = {
       id: generateId(),
       ...jobData,
@@ -938,6 +942,9 @@ export function useJobs() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+    
+    console.log('New job created:', newJob);
+    console.log('New job jobType:', newJob.jobType);
     
     setJobs(prev => [...prev, newJob]);
     
@@ -1392,14 +1399,826 @@ export function useJobs() {
   }, [jobs, recalculatePhaseMaterials]);
   
   const addDefaultScopesToJob = useCallback((jobId, callback) => {
-    const defaultScopesData = [
+    // Get the job to determine its type
+    const job = jobs.find(j => j.id === jobId);
+    const jobType = job?.jobType || 'residential';
+    
+    console.log('=== addDefaultScopesToJob called ===');
+    console.log('JobId:', jobId);
+    console.log('Found job:', job);
+    console.log('Job type:', jobType);
+    
+    let defaultScopesData = [];
+    
+    if (jobType === 'residential-construction') {
+      // Full home construction scopes
+      defaultScopesData = [
+        { 
+          name: 'Site Preparation', 
+          description: 'Site clearing, excavation, and foundation preparation. Coordinate with excavation contractor.',
+          status: 'Not Started',
+          trade: 'Excavation',
+          responsible: 'Subcontractor',
+          tasks: [
+            { 
+              id: 'task1', 
+              text: 'Obtain all required building permits and municipal approvals', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Submit building permit application with architectural plans, obtain electrical/plumbing permits, schedule initial inspections, ensure all fees are paid and permits are posted on-site',
+              trade: 'Excavation',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task2', 
+              text: 'Schedule and coordinate excavation contractor', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Obtain quotes from 3 licensed excavation contractors, schedule excavation work to begin within 2 weeks of permit approval, coordinate with utility companies for any required utility relocations',
+              trade: 'Excavation',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task3', 
+              text: 'Mark all utility locations and property boundaries', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Call 811 for utility marking, verify property survey pins, mark building footprint according to approved plans, ensure minimum setbacks are maintained per local code',
+              trade: 'Excavation',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task4', 
+              text: 'Complete site clearing and rough grading', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Remove all trees and vegetation within building footprint, clear debris and obstacles, rough grade site to proper elevation, install erosion control measures, prepare access roads for construction vehicles',
+              trade: 'Excavation',
+              responsible: 'Subcontractor'
+            }
+          ]
+        },
+        { 
+          name: 'Foundation', 
+          description: 'Foundation work including concrete, waterproofing, and backfill. Coordinate with concrete contractor.',
+          status: 'Not Started',
+          trade: 'Concrete',
+          responsible: 'Subcontractor',
+          tasks: [
+            { 
+              id: 'task5', 
+              text: 'Install foundation forms according to engineering specifications', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Set forms to exact dimensions per architectural plans, ensure proper alignment and level, brace forms securely to prevent blowout, verify all penetrations are properly located for utilities',
+              trade: 'Concrete',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task6', 
+              text: 'Install rebar and reinforcement per structural engineer requirements', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install #4 rebar on 12" centers as specified, ensure proper lap splices and tie wire connections, install rebar chairs to maintain proper cover, verify all reinforcement meets structural requirements',
+              trade: 'Concrete',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task7', 
+              text: 'Pour concrete foundation with proper mix design', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Use 3000 PSI concrete mix, ensure continuous pour to prevent cold joints, vibrate concrete properly to eliminate air pockets, screed to proper elevation, finish surface smooth and level',
+              trade: 'Concrete',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task8', 
+              text: 'Cure foundation and apply waterproofing membrane', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Maintain proper curing conditions for minimum 7 days, apply foundation waterproofing membrane per manufacturer specifications, install drainage board and backfill with proper drainage material',
+              trade: 'Concrete',
+              responsible: 'Subcontractor'
+            }
+          ]
+        },
+        { 
+          name: 'Framing', 
+          description: 'Structural framing including walls, roof, and floor systems. In-house framing crew.',
+          status: 'Not Started',
+          trade: 'Framing',
+          responsible: 'In-House',
+          tasks: [
+            { 
+              id: 'task9', 
+              text: 'Frame exterior walls with proper spacing and alignment', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Use 2x6 studs on 16" centers, ensure walls are plumb and square, install proper headers over openings, use pressure-treated lumber for bottom plates, install house wrap and flashing',
+              trade: 'Framing',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task10', 
+              text: 'Install floor joists and subfloor system', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install engineered floor joists per manufacturer specifications, ensure proper spacing and support, install 3/4" tongue and groove subfloor, glue and screw subfloor to joists, stagger joints properly',
+              trade: 'Framing',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task11', 
+              text: 'Frame interior walls and partitions', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Use 2x4 studs on 16" centers for interior walls, frame all interior partitions per architectural plans, ensure proper door and window rough openings, install blocking for future fixtures and hardware',
+              trade: 'Framing',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task12', 
+              text: 'Install roof trusses and sheathing', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Set engineered roof trusses per manufacturer specifications, ensure proper spacing and alignment, install temporary bracing during installation, install 7/16" OSB roof sheathing, stagger joints and use proper fasteners',
+              trade: 'Framing',
+              responsible: 'In-House'
+            }
+          ]
+        },
+        { 
+          name: 'Roofing', 
+          description: 'Roof installation including shingles, flashing, and gutters. Coordinate with roofing contractor.',
+          status: 'Not Started',
+          trade: 'Roofing',
+          responsible: 'Subcontractor',
+          tasks: [
+            { 
+              id: 'task21', 
+              text: 'Install roof decking and underlayment system', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 7/16" OSB roof decking with proper spacing, apply ice and water shield in valleys and eaves, install synthetic underlayment over entire roof, ensure proper overlap and fastening per manufacturer specifications',
+              trade: 'Roofing',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task22', 
+              text: 'Install shingles and flashing system', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install architectural shingles with proper starter course, maintain consistent exposure and alignment, install step flashing at walls, install valley flashing and ridge vents, ensure proper ventilation',
+              trade: 'Roofing',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task23', 
+              text: 'Install gutters and downspouts', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 5" aluminum gutters with proper slope (1/4" per 10 feet), install downspouts every 35 feet, ensure proper drainage away from foundation, install gutter guards and splash blocks',
+              trade: 'Roofing',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task24', 
+              text: 'Complete roof inspection and warranty documentation', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Schedule municipal roof inspection, obtain inspection approval, document all materials used for warranty purposes, provide homeowner with warranty information and maintenance instructions',
+              trade: 'Roofing',
+              responsible: 'Subcontractor'
+            }
+          ]
+        },
+        { 
+          name: 'Plumbing Rough-In', 
+          description: 'Rough plumbing installation including water lines, drains, and fixtures. Coordinate with plumbing contractor.',
+          status: 'Not Started',
+          trade: 'Plumbing',
+          responsible: 'Subcontractor',
+          tasks: [
+            { 
+              id: 'task25', 
+              text: 'Install main water supply lines and distribution system', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 3/4" main water line from meter to house, install 1/2" distribution lines to fixtures, use PEX-A tubing with proper fittings, maintain proper slope and support spacing, install shut-off valves at main and branch lines',
+              trade: 'Plumbing',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task26', 
+              text: 'Install drain and waste line system', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 3" main drain line with proper slope (1/4" per foot), install 2" branch lines to fixtures, use PVC DWV fittings, install cleanouts at proper intervals, ensure proper venting and trap installation',
+              trade: 'Plumbing',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task27', 
+              text: 'Install water heater connections and gas lines', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 3/4" gas line to water heater location, install water supply and return lines, install expansion tank and pressure relief valve, ensure proper clearances and ventilation requirements',
+              trade: 'Plumbing',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task28', 
+              text: 'Pressure test all plumbing systems', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Test water supply lines at 150 PSI for 2 hours, test drain lines with water column test, document all test results, repair any leaks or failures, obtain plumbing inspection approval',
+              trade: 'Plumbing',
+              responsible: 'Subcontractor'
+            }
+          ]
+        },
+        { 
+          name: 'Electrical Rough-In', 
+          description: 'Rough electrical installation including wiring, outlets, and fixtures. Coordinate with electrical contractor.',
+          status: 'Not Started',
+          trade: 'Electrical',
+          responsible: 'Subcontractor',
+          tasks: [
+            { 
+              id: 'task29', 
+              text: 'Install main electrical panel and service entrance', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 200-amp main electrical panel with proper clearances, install service entrance cable and meter base, ensure proper grounding and bonding, install main disconnect and branch circuit breakers per load calculations',
+              trade: 'Electrical',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task30', 
+              text: 'Run electrical wiring and cable throughout house', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 12 AWG wire for 20-amp circuits, 14 AWG for 15-amp circuits, maintain proper wire protection and support, install cable through studs with proper clearances, label all circuits at panel',
+              trade: 'Electrical',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task31', 
+              text: 'Install electrical outlets, switches, and junction boxes', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install outlets every 12 feet per code, install GFCI outlets in wet areas, install switches and dimmers per electrical plan, ensure proper box fill and wire connections, install cover plates',
+              trade: 'Electrical',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task32', 
+              text: 'Install lighting fixtures and ceiling fans', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install recessed lighting per architectural plan, install ceiling fan boxes with proper support, install exterior lighting and security systems, ensure proper fixture clearances and accessibility',
+              trade: 'Electrical',
+              responsible: 'Subcontractor'
+            }
+          ]
+        },
+        { 
+          name: 'HVAC Installation', 
+          description: 'HVAC system installation including ductwork, equipment, and controls. Coordinate with HVAC contractor.',
+          status: 'Not Started',
+          trade: 'HVAC',
+          responsible: 'Subcontractor',
+          tasks: [
+            { 
+              id: 'task33', 
+              text: 'Install HVAC equipment and main units', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 3-ton heat pump system with proper clearances, install air handler in conditioned space, ensure proper electrical connections and refrigerant lines, install condensate drain system, verify manufacturer specifications',
+              trade: 'HVAC',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task34', 
+              text: 'Install ductwork system throughout house', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install R-8 insulated supply and return ducts, maintain proper duct sizing per load calculations, ensure proper sealing with mastic, install duct supports every 4 feet, maintain proper clearances from insulation',
+              trade: 'HVAC',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task35', 
+              text: 'Install supply vents and return air grilles', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install supply vents in each room per load calculations, install return air grilles in central locations, ensure proper airflow distribution, install adjustable dampers for balancing, maintain proper clearances',
+              trade: 'HVAC',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task36', 
+              text: 'Test, balance, and commission HVAC system', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Perform system startup and testing, balance airflow to each room, verify proper temperature differentials, test all safety controls, obtain HVAC inspection approval, provide homeowner with operation instructions',
+              trade: 'HVAC',
+              responsible: 'Subcontractor'
+            }
+          ]
+        },
+        { 
+          name: 'Insulation', 
+          description: 'Insulation installation including walls, ceilings, and floors. In-house crew.',
+          status: 'Not Started',
+          trade: 'Insulation',
+          responsible: 'In-House',
+          tasks: [
+            { 
+              id: 'task37', 
+              text: 'Install wall insulation to meet energy code requirements', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install R-15 fiberglass batts in 2x6 exterior walls, ensure proper fit without compression, install R-13 batts in 2x4 interior walls, maintain proper clearances around electrical boxes and plumbing',
+              trade: 'Insulation',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task38', 
+              text: 'Install ceiling and attic insulation', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install R-38 blown-in insulation in attic, maintain proper ventilation at eaves, install baffles to prevent blocking of soffit vents, ensure proper coverage over all ceiling areas',
+              trade: 'Insulation',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task39', 
+              text: 'Install floor and crawl space insulation', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install R-19 fiberglass batts between floor joists, ensure proper support with wire mesh or netting, install vapor barrier facing up, maintain proper clearances around plumbing and electrical',
+              trade: 'Insulation',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task40', 
+              text: 'Install vapor barrier and air sealing', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 6-mil polyethylene vapor barrier on warm side of walls, seal all penetrations with caulk or foam, install weatherstripping at doors and windows, ensure proper air sealing throughout house',
+              trade: 'Insulation',
+              responsible: 'In-House'
+            }
+          ]
+        },
+        { 
+          name: 'Drywall Hang', 
+          description: 'Drywall hanging with specified thickness for ceilings and walls. In-house drywall crew.',
+          status: 'Not Started',
+          trade: 'Drywall',
+          responsible: 'In-House',
+          ceilingThickness: '5/8"',
+          wallThickness: '1/2"',
+          hangExceptions: '5/8" at garage firewall. Moisture resistant drywall at wet walls.',
+          tasks: [
+            { 
+              id: 'task13', 
+              text: 'Hang drywall on all walls with proper thickness specifications', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 1/2" drywall on walls, 5/8" drywall at garage firewall, moisture-resistant drywall at wet walls (bathrooms, laundry), stagger joints, maintain 1/8" gap at floor, use proper fasteners every 8" on edges and 12" in field',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task14', 
+              text: 'Hang drywall on all ceilings with proper support', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 5/8" drywall on all ceilings, ensure proper support spacing, stagger joints perpendicular to joists, maintain 1/8" gap at walls, use proper fasteners every 6" on edges and 8" in field, check for sagging',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task15', 
+              text: 'Install corner bead and trim accessories', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install metal corner bead on all outside corners, install J-bead at drywall to other material transitions, install L-bead at window and door openings, ensure proper alignment and secure fastening',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task16', 
+              text: 'Verify proper fastening and prepare for finishing', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Check all fasteners are properly set (slightly below surface), remove any loose or protruding fasteners, fill fastener dimples with joint compound, ensure all joints are properly aligned and ready for taping',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            }
+          ]
+        },
+        { 
+          name: 'Drywall Finish', 
+          description: 'Drywall finishing with specified textures and finishes. In-house drywall crew.',
+          status: 'Not Started',
+          trade: 'Drywall',
+          responsible: 'In-House',
+          ceilingFinish: 'Stomp Knockdown',
+          ceilingExceptions: '',
+          wallFinish: 'Level 4 Smooth',
+          wallExceptions: 'Roll Texture Garage walls and Small Closet Walls.',
+          tasks: [
+            { 
+              id: 'task17', 
+              text: 'Tape and mud all joints to Level 4 smooth finish', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Apply paper tape to all joints, apply 3 coats of joint compound with proper drying time between coats, feather edges to 12" width, ensure smooth transition with no visible joints or ridges',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task18', 
+              text: 'Apply Stomp Knockdown texture to all ceilings', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Apply texture compound with stomp brush, create consistent pattern across entire ceiling, allow proper drying time, knock down texture to desired height, ensure uniform appearance throughout',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task19', 
+              text: 'Sand and prepare all walls for final finish', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Sand all joints and fastener dimples smooth, remove all dust and debris, apply primer coat to all walls, ensure walls are ready for paint application, check for any remaining imperfections',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task20', 
+              text: 'Apply Roll Texture to garage walls and small closets', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Apply roll texture to garage walls and small closet walls only, maintain Level 4 smooth finish on all other walls, ensure proper coverage and consistent pattern, allow proper drying time',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            }
+          ]
+        },
+        { 
+          name: 'Paint & Trim', 
+          description: 'Interior painting and trim installation. Coordinate with painting contractor.',
+          status: 'Not Started',
+          trade: 'Painting',
+          responsible: 'Subcontractor',
+          tasks: [
+            { 
+              id: 'task41', 
+              text: 'Prime all walls and ceilings with quality primer', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Apply high-quality primer to all walls and ceilings, ensure proper coverage and adhesion, allow proper drying time between coats, use appropriate primer for different surfaces (drywall, wood, metal)',
+              trade: 'Painting',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task42', 
+              text: 'Install baseboards, crown molding, and trim work', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 5-1/4" baseboards throughout house, install crown molding in living areas, install door and window casings, ensure proper miter cuts and tight joints, use appropriate fasteners and adhesives',
+              trade: 'Painting',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task43', 
+              text: 'Apply first coat of paint to all surfaces', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Apply first coat of interior paint to all walls and ceilings, use high-quality paint with proper coverage, maintain consistent application technique, allow proper drying time between coats',
+              trade: 'Painting',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task44', 
+              text: 'Apply final coat and touch-up work', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Apply final coat of paint to all surfaces, perform touch-up work as needed, ensure consistent finish throughout, clean up all paint equipment and materials, provide paint color information to homeowner',
+              trade: 'Painting',
+              responsible: 'Subcontractor'
+            }
+          ]
+        },
+        { 
+          name: 'Flooring', 
+          description: 'Flooring installation including carpet, tile, and hardwood. Coordinate with flooring contractor.',
+          status: 'Not Started',
+          trade: 'Flooring',
+          responsible: 'Subcontractor',
+          tasks: [
+            { 
+              id: 'task45', 
+              text: 'Prepare subfloor and install underlayment', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Level and prepare subfloor for flooring installation, install appropriate underlayment for each flooring type, ensure proper moisture barriers, check for squeaks and repair as needed',
+              trade: 'Flooring',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task46', 
+              text: 'Install hardwood flooring throughout house', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 3/4" solid hardwood flooring in living areas, maintain proper expansion gaps, use appropriate fasteners and adhesives, ensure proper acclimation before installation, stagger joints properly',
+              trade: 'Flooring',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task47', 
+              text: 'Install tile flooring in wet areas', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install ceramic tile in bathrooms and laundry room, use appropriate thinset and grout, ensure proper waterproofing, maintain consistent grout lines, install tile trim and transitions',
+              trade: 'Flooring',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task48', 
+              text: 'Install carpet flooring in bedrooms', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install carpet with proper padding in bedrooms, ensure proper stretching and installation, install carpet transitions and trim, clean up all installation debris, provide care instructions to homeowner',
+              trade: 'Flooring',
+              responsible: 'Subcontractor'
+            }
+          ]
+        },
+        { 
+          name: 'Kitchen & Bath', 
+          description: 'Kitchen and bathroom fixture installation. Coordinate with specialty contractors.',
+          status: 'Not Started',
+          trade: 'Kitchen/Bath',
+          responsible: 'Subcontractor',
+          tasks: [
+            { 
+              id: 'task49', 
+              text: 'Install kitchen cabinets and hardware', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install custom kitchen cabinets per architectural plans, ensure proper leveling and alignment, install cabinet hardware and doors, install under-cabinet lighting, ensure proper clearances and accessibility',
+              trade: 'Kitchen/Bath',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task50', 
+              text: 'Install countertops and backsplash', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install granite or quartz countertops with proper support, ensure proper sealing and finishing, install tile backsplash with proper waterproofing, install sink and faucet connections',
+              trade: 'Kitchen/Bath',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task51', 
+              text: 'Install bathroom fixtures and vanities', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install bathroom vanities and mirrors, install toilets and faucets, install shower/tub fixtures, ensure proper plumbing connections, install bathroom accessories and hardware',
+              trade: 'Kitchen/Bath',
+              responsible: 'Subcontractor'
+            },
+            { 
+              id: 'task52', 
+              text: 'Install kitchen appliances and final connections', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install refrigerator, dishwasher, range, and microwave, ensure proper electrical and plumbing connections, test all appliances for proper operation, provide operation instructions to homeowner',
+              trade: 'Kitchen/Bath',
+              responsible: 'Subcontractor'
+            }
+          ]
+        },
+        { 
+          name: 'Final Walkthrough', 
+          description: 'Final inspection, punch list completion, and client handover.',
+          status: 'Not Started',
+          trade: 'Management',
+          responsible: 'In-House',
+          tasks: [
+            { 
+              id: 'task53', 
+              text: 'Complete final municipal inspections', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Schedule and complete final building inspection, electrical inspection, plumbing inspection, and HVAC inspection, obtain all required certificates of occupancy and compliance',
+              trade: 'Management',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task54', 
+              text: 'Create comprehensive punch list', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Conduct thorough walkthrough of entire house, document all deficiencies and incomplete items, prioritize items by importance, assign responsible parties and completion dates',
+              trade: 'Management',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task55', 
+              text: 'Complete all punch list items', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Coordinate completion of all punch list items, ensure quality standards are met, verify all work is completed to specifications, obtain final approvals from all trades',
+              trade: 'Management',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task56', 
+              text: 'Client walkthrough and project handover', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Conduct final walkthrough with homeowner, provide operation instructions for all systems, deliver warranty information and maintenance schedules, collect final payment and project sign-off',
+              trade: 'Management',
+              responsible: 'In-House'
+            }
+          ]
+        }
+      ];
+    } else {
+      // Traditional drywall scopes
+      defaultScopesData = [
       { 
         name: 'Hang', 
         description: 'Drywall hanging with specified thickness for ceilings and walls.',
         status: 'Not Started',
         ceilingThickness: '5/8"',
         wallThickness: '1/2"',
-        hangExceptions: '5/8" at garage firewall. Moisture resistant drywall at wet walls.'
+        hangExceptions: '5/8" at garage firewall. Moisture resistant drywall at wet walls.',
+        tasks: [
+            { 
+              id: 'task57', 
+              text: 'Hang drywall on all walls with proper thickness specifications', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 1/2" drywall on walls, 5/8" drywall at garage firewall, moisture-resistant drywall at wet walls (bathrooms, laundry), stagger joints, maintain 1/8" gap at floor, use proper fasteners every 8" on edges and 12" in field',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task58', 
+              text: 'Hang drywall on all ceilings with proper support', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install 5/8" drywall on all ceilings, ensure proper support spacing, stagger joints perpendicular to joists, maintain 1/8" gap at walls, use proper fasteners every 6" on edges and 8" in field, check for sagging',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task59', 
+              text: 'Install corner bead and trim accessories', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Install metal corner bead on all outside corners, install J-bead at drywall to other material transitions, install L-bead at window and door openings, ensure proper alignment and secure fastening',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task60', 
+              text: 'Verify proper fastening and prepare for finishing', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Check all fasteners are properly set (slightly below surface), remove any loose or protruding fasteners, fill fastener dimples with joint compound, ensure all joints are properly aligned and ready for taping',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            }
+        ]
       },
       { 
         name: 'Finish', 
@@ -1408,17 +2227,68 @@ export function useJobs() {
         ceilingFinish: 'Stomp Knockdown',
         ceilingExceptions: '',
         wallFinish: 'Level 4 Smooth',
-        wallExceptions: 'Roll Texture Garage walls and Small Closet Walls.'
+        wallExceptions: 'Roll Texture Garage walls and Small Closet Walls.',
+        tasks: [
+            { 
+              id: 'task61', 
+              text: 'Tape and mud all joints to Level 4 smooth finish', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Apply paper tape to all joints, apply 3 coats of joint compound with proper drying time between coats, feather edges to 12" width, ensure smooth transition with no visible joints or ridges',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task62', 
+              text: 'Apply Stomp Knockdown texture to all ceilings', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Apply texture compound with stomp brush, create consistent pattern across entire ceiling, allow proper drying time, knock down texture to desired height, ensure uniform appearance throughout',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task63', 
+              text: 'Sand and prepare all walls for final finish', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Sand all joints and fastener dimples smooth, remove all dust and debris, apply primer coat to all walls, ensure walls are ready for paint application, check for any remaining imperfections',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            },
+            { 
+              id: 'task64', 
+              text: 'Apply Roll Texture to garage walls and small closets', 
+              completed: false, 
+              assignedTo: '', 
+              dueDate: '', 
+              createdAt: new Date().toISOString(),
+              specifications: 'Apply roll texture to garage walls and small closet walls only, maintain Level 4 smooth finish on all other walls, ensure proper coverage and consistent pattern, allow proper drying time',
+              trade: 'Drywall',
+              responsible: 'In-House'
+            }
+        ]
       }
     ];
+    }
 
-    const job = jobs.find(j => j.id === jobId);
-    const existingScopes = job?.scopes || [];
+    const targetJob = jobs.find(j => j.id === jobId);
+    const existingScopes = targetJob?.scopes || [];
     const existingScopeNames = existingScopes.map(s => s.name);
     
     const scopesToAdd = defaultScopesData.filter(scope => 
       !existingScopeNames.includes(scope.name)
     );
+
+    console.log('Default scopes data:', defaultScopesData.length, 'scopes');
+    console.log('Existing scope names:', existingScopeNames);
+    console.log('Scopes to add:', scopesToAdd.length, scopesToAdd.map(s => s.name));
 
     if (scopesToAdd.length === 0) {
       toast({

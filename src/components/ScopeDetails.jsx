@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Hammer, Edit3, Save, X, Trash2 } from 'lucide-react';
+import { Hammer, Edit3, Save, X, Trash2, Plus, CheckCircle, Circle, User, Calendar, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,12 +9,31 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { format } from 'date-fns';
 
-const ScopeDetails = ({ scope, jobId, onUpdateScope, onDeleteScope }) => {
+const ScopeDetails = ({ scope, jobId, onUpdateScope, onDeleteScope, employees = [] }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const [newTaskText, setNewTaskText] = useState('');
+  const [newTaskSpecifications, setNewTaskSpecifications] = useState('');
+  const [newTaskTrade, setNewTaskTrade] = useState('');
+  const [newTaskResponsible, setNewTaskResponsible] = useState('');
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editingTaskData, setEditingTaskData] = useState({
+    text: '',
+    specifications: '',
+    trade: '',
+    responsible: '',
+    assignedTo: '',
+    dueDate: ''
+  });
   const [formData, setFormData] = useState({
     name: scope?.name || '',
     description: scope?.description || '',
+    // Construction scope fields
+    trade: scope?.trade || '',
+    responsible: scope?.responsible || '',
+    status: scope?.status || 'Not Started',
     // Hang scope specific fields
     ceilingThickness: scope?.ceilingThickness || '',
     wallThickness: scope?.wallThickness || '',
@@ -27,6 +46,148 @@ const ScopeDetails = ({ scope, jobId, onUpdateScope, onDeleteScope }) => {
     wallFinishOther: scope?.wallFinishOther || '',
     wallExceptions: scope?.wallExceptions || ''
   });
+
+  // Get tasks from scope or initialize empty array
+  const tasks = scope?.tasks || [];
+
+  // Task management functions
+  const generateId = () => Math.random().toString(36).substr(2, 9);
+
+  const handleAddTask = () => {
+    if (!newTaskText.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter a task description.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newTask = {
+      id: generateId(),
+      text: newTaskText.trim(),
+      specifications: newTaskSpecifications.trim(),
+      trade: newTaskTrade,
+      responsible: newTaskResponsible,
+      completed: false,
+      assignedTo: '',
+      dueDate: '',
+      createdAt: new Date().toISOString()
+    };
+
+    const updatedTasks = [...tasks, newTask];
+    onUpdateScope(scope.id, { tasks: updatedTasks });
+    setNewTaskText('');
+    setNewTaskSpecifications('');
+    setNewTaskTrade('');
+    setNewTaskResponsible('');
+    setIsAddingTask(false);
+    
+    toast({
+      title: "Task Added! ✅",
+      description: "New task has been added to the scope."
+    });
+  };
+
+  const handleToggleTask = (taskId) => {
+    const updatedTasks = tasks.map(task =>
+      task.id === taskId ? { ...task, completed: !task.completed } : task
+    );
+    onUpdateScope(scope.id, { tasks: updatedTasks });
+  };
+
+  const handleDeleteTask = (taskId) => {
+    const updatedTasks = tasks.filter(task => task.id !== taskId);
+    onUpdateScope(scope.id, { tasks: updatedTasks });
+    
+    toast({
+      title: "Task Deleted",
+      description: "Task has been removed from the scope."
+    });
+  };
+
+  const handleUpdateTask = (taskId, updates) => {
+    const updatedTasks = tasks.map(task =>
+      task.id === taskId ? { ...task, ...updates } : task
+    );
+    onUpdateScope(scope.id, { tasks: updatedTasks });
+  };
+
+  const getCompletionPercentage = () => {
+    if (tasks.length === 0) return 0;
+    const completedTasks = tasks.filter(task => task.completed).length;
+    return Math.round((completedTasks / tasks.length) * 100);
+  };
+
+  const getEmployeeName = (employeeId) => {
+    const employee = employees.find(emp => emp.id === employeeId);
+    return employee ? `${employee.firstName} ${employee.lastName}` : 'Unassigned';
+  };
+
+  const handleEditTask = (task) => {
+    setEditingTaskId(task.id);
+    setEditingTaskData({
+      text: task.text,
+      specifications: task.specifications || '',
+      trade: task.trade || '',
+      responsible: task.responsible || '',
+      assignedTo: task.assignedTo || '',
+      dueDate: task.dueDate || ''
+    });
+  };
+
+  const handleSaveTaskEdit = () => {
+    if (!editingTaskData.text.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter a task description.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const updatedTasks = tasks.map(task =>
+      task.id === editingTaskId 
+        ? { 
+            ...task, 
+            text: editingTaskData.text,
+            specifications: editingTaskData.specifications,
+            trade: editingTaskData.trade,
+            responsible: editingTaskData.responsible,
+            assignedTo: editingTaskData.assignedTo,
+            dueDate: editingTaskData.dueDate
+          }
+        : task
+    );
+    
+    onUpdateScope(scope.id, { tasks: updatedTasks });
+    setEditingTaskId(null);
+    setEditingTaskData({
+      text: '',
+      specifications: '',
+      trade: '',
+      responsible: '',
+      assignedTo: '',
+      dueDate: ''
+    });
+    
+    toast({
+      title: "Task Updated! ✅",
+      description: "Task has been successfully updated."
+    });
+  };
+
+  const handleCancelTaskEdit = () => {
+    setEditingTaskId(null);
+    setEditingTaskData({
+      text: '',
+      specifications: '',
+      trade: '',
+      responsible: '',
+      assignedTo: '',
+      dueDate: ''
+    });
+  };
 
   if (!scope) {
     return (
@@ -59,6 +220,9 @@ const ScopeDetails = ({ scope, jobId, onUpdateScope, onDeleteScope }) => {
     setFormData({
       name: scope?.name || '',
       description: scope?.description || '',
+      trade: scope?.trade || '',
+      responsible: scope?.responsible || '',
+      status: scope?.status || 'Not Started',
       ceilingThickness: scope?.ceilingThickness || '',
       wallThickness: scope?.wallThickness || '',
       hangExceptions: scope?.hangExceptions || '',
@@ -191,6 +355,80 @@ const ScopeDetails = ({ scope, jobId, onUpdateScope, onDeleteScope }) => {
                     placeholder="Enter general scope description"
                     className="border-2 focus:border-brandPrimary transition-colors min-h-[80px]"
                   />
+                </div>
+
+                {/* Construction Scope Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-700">
+                      Trade
+                    </Label>
+                    <Select
+                      value={formData.trade}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, trade: value }))}
+                    >
+                      <SelectTrigger className="border-2 focus:border-brandPrimary">
+                        <SelectValue placeholder="Select trade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Excavation">Excavation</SelectItem>
+                        <SelectItem value="Concrete">Concrete</SelectItem>
+                        <SelectItem value="Framing">Framing</SelectItem>
+                        <SelectItem value="Roofing">Roofing</SelectItem>
+                        <SelectItem value="Plumbing">Plumbing</SelectItem>
+                        <SelectItem value="Electrical">Electrical</SelectItem>
+                        <SelectItem value="HVAC">HVAC</SelectItem>
+                        <SelectItem value="Insulation">Insulation</SelectItem>
+                        <SelectItem value="Drywall">Drywall</SelectItem>
+                        <SelectItem value="Painting">Painting</SelectItem>
+                        <SelectItem value="Flooring">Flooring</SelectItem>
+                        <SelectItem value="Kitchen/Bath">Kitchen/Bath</SelectItem>
+                        <SelectItem value="Management">Management</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-700">
+                      Responsible Party
+                    </Label>
+                    <Select
+                      value={formData.responsible}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, responsible: value }))}
+                    >
+                      <SelectTrigger className="border-2 focus:border-brandPrimary">
+                        <SelectValue placeholder="Select responsible party" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="In-House">In-House</SelectItem>
+                        <SelectItem value="Subcontractor">Subcontractor</SelectItem>
+                        <SelectItem value="Client">Client</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-semibold text-gray-700">
+                      Status
+                    </Label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                    >
+                      <SelectTrigger className="border-2 focus:border-brandPrimary">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Not Started">Not Started</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="On Hold">On Hold</SelectItem>
+                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
@@ -400,6 +638,43 @@ const ScopeDetails = ({ scope, jobId, onUpdateScope, onDeleteScope }) => {
                   </div>
                 )}
 
+                {/* Construction Scope Information */}
+                {(scope?.trade || scope?.responsible || scope?.status) && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Construction Details</h3>
+                    <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-l-blue-500">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {scope?.trade && (
+                          <div>
+                            <p className="font-semibold text-blue-700">Trade:</p>
+                            <p className="text-gray-800">{scope.trade}</p>
+                          </div>
+                        )}
+                        {scope?.responsible && (
+                          <div>
+                            <p className="font-semibold text-blue-700">Responsible Party:</p>
+                            <p className="text-gray-800">{scope.responsible}</p>
+                          </div>
+                        )}
+                        {scope?.status && (
+                          <div>
+                            <p className="font-semibold text-blue-700">Status:</p>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              scope.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                              scope.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+                              scope.status === 'On Hold' ? 'bg-yellow-100 text-yellow-800' :
+                              scope.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {scope.status}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Hang Scope Display */}
                 {isHangScope() && (scope?.ceilingThickness || scope?.wallThickness || scope?.hangExceptions) && (
                   <div>
@@ -470,6 +745,383 @@ const ScopeDetails = ({ scope, jobId, onUpdateScope, onDeleteScope }) => {
                     </div>
                   </div>
                 )}
+
+                {/* Checklist Section */}
+                <div className="mt-8 border-t pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="h-5 w-5 text-brandPrimary" />
+                      <h3 className="text-lg font-semibold text-gray-900">Tasks & Checklist</h3>
+                      {tasks.length > 0 && (
+                        <span className="bg-brandPrimary/10 text-brandPrimary px-2 py-1 rounded-full text-sm font-medium">
+                          {getCompletionPercentage()}% Complete
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      onClick={() => setIsAddingTask(true)}
+                      size="sm"
+                      className="bg-brandPrimary hover:bg-brandPrimary/90 text-white"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Task
+                    </Button>
+                  </div>
+
+                  {/* Add Task Form */}
+                  {isAddingTask && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-4 p-4 bg-gray-50 rounded-lg border"
+                    >
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="taskText" className="text-sm font-medium text-gray-700">
+                            Task Description
+                          </Label>
+                          <Input
+                            id="taskText"
+                            value={newTaskText}
+                            onChange={(e) => setNewTaskText(e.target.value)}
+                            placeholder="Enter task description..."
+                            className="mt-1"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="taskSpecifications" className="text-sm font-medium text-gray-700">
+                            Specifications (Optional)
+                          </Label>
+                          <Textarea
+                            id="taskSpecifications"
+                            value={newTaskSpecifications}
+                            onChange={(e) => setNewTaskSpecifications(e.target.value)}
+                            placeholder="Enter detailed specifications..."
+                            className="mt-1 min-h-[60px]"
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label htmlFor="taskTrade" className="text-sm font-medium text-gray-700">
+                              Trade (Optional)
+                            </Label>
+                            <Select
+                              value={newTaskTrade}
+                              onValueChange={setNewTaskTrade}
+                            >
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Select Trade" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Excavation">Excavation</SelectItem>
+                                <SelectItem value="Concrete">Concrete</SelectItem>
+                                <SelectItem value="Framing">Framing</SelectItem>
+                                <SelectItem value="Roofing">Roofing</SelectItem>
+                                <SelectItem value="Plumbing">Plumbing</SelectItem>
+                                <SelectItem value="Electrical">Electrical</SelectItem>
+                                <SelectItem value="HVAC">HVAC</SelectItem>
+                                <SelectItem value="Insulation">Insulation</SelectItem>
+                                <SelectItem value="Drywall">Drywall</SelectItem>
+                                <SelectItem value="Flooring">Flooring</SelectItem>
+                                <SelectItem value="Painting">Painting</SelectItem>
+                                <SelectItem value="Kitchen/Bath">Kitchen/Bath</SelectItem>
+                                <SelectItem value="Management">Management</SelectItem>
+                                <SelectItem value="General Labor">General Labor</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="taskResponsible" className="text-sm font-medium text-gray-700">
+                              Responsible (Optional)
+                            </Label>
+                            <Select
+                              value={newTaskResponsible}
+                              onValueChange={setNewTaskResponsible}
+                            >
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Select Responsible" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="In-House">In-House</SelectItem>
+                                <SelectItem value="Subcontractor">Subcontractor</SelectItem>
+                                <SelectItem value="In-House Management">In-House Management</SelectItem>
+                                <SelectItem value="Client">Client</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            onClick={handleAddTask}
+                            size="sm"
+                            className="bg-brandPrimary hover:bg-brandPrimary/90 text-white"
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add Task
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setIsAddingTask(false);
+                              setNewTaskText('');
+                              setNewTaskSpecifications('');
+                              setNewTaskTrade('');
+                              setNewTaskResponsible('');
+                            }}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Tasks List */}
+                  {tasks.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Circle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                      <p className="font-medium">No tasks yet</p>
+                      <p className="text-sm">Add tasks to track progress for this scope</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {tasks.map((task, index) => (
+                        <motion.div
+                          key={task.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className={`p-3 rounded-lg border transition-all ${
+                            task.completed 
+                              ? 'bg-green-50 border-green-200' 
+                              : 'bg-white border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {editingTaskId === task.id ? (
+                            /* Edit Task Form */
+                            <div className="space-y-3">
+                              <div className="flex items-center space-x-3">
+                                <button
+                                  onClick={() => handleToggleTask(task.id)}
+                                  className={`flex-shrink-0 p-1 rounded-full transition-colors ${
+                                    task.completed 
+                                      ? 'text-green-600 hover:text-green-700' 
+                                      : 'text-gray-400 hover:text-gray-600'
+                                  }`}
+                                >
+                                  {task.completed ? (
+                                    <CheckCircle className="h-5 w-5" />
+                                  ) : (
+                                    <Circle className="h-5 w-5" />
+                                  )}
+                                </button>
+                                <div className="flex-1">
+                                  <Input
+                                    value={editingTaskData.text}
+                                    onChange={(e) => setEditingTaskData(prev => ({ ...prev, text: e.target.value }))}
+                                    placeholder="Task description..."
+                                    className="text-sm font-medium"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label className="text-xs font-medium text-gray-700">Specifications</Label>
+                                <Textarea
+                                  value={editingTaskData.specifications}
+                                  onChange={(e) => setEditingTaskData(prev => ({ ...prev, specifications: e.target.value }))}
+                                  placeholder="Detailed specifications..."
+                                  className="text-xs min-h-[60px]"
+                                />
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-700">Trade</Label>
+                                  <Select
+                                    value={editingTaskData.trade}
+                                    onValueChange={(value) => setEditingTaskData(prev => ({ ...prev, trade: value }))}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs">
+                                      <SelectValue placeholder="Select Trade" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="Excavation">Excavation</SelectItem>
+                                      <SelectItem value="Concrete">Concrete</SelectItem>
+                                      <SelectItem value="Framing">Framing</SelectItem>
+                                      <SelectItem value="Roofing">Roofing</SelectItem>
+                                      <SelectItem value="Plumbing">Plumbing</SelectItem>
+                                      <SelectItem value="Electrical">Electrical</SelectItem>
+                                      <SelectItem value="HVAC">HVAC</SelectItem>
+                                      <SelectItem value="Insulation">Insulation</SelectItem>
+                                      <SelectItem value="Drywall">Drywall</SelectItem>
+                                      <SelectItem value="Flooring">Flooring</SelectItem>
+                                      <SelectItem value="Painting">Painting</SelectItem>
+                                      <SelectItem value="Kitchen/Bath">Kitchen/Bath</SelectItem>
+                                      <SelectItem value="Management">Management</SelectItem>
+                                      <SelectItem value="General Labor">General Labor</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                
+                                <div>
+                                  <Label className="text-xs font-medium text-gray-700">Responsible</Label>
+                                  <Select
+                                    value={editingTaskData.responsible}
+                                    onValueChange={(value) => setEditingTaskData(prev => ({ ...prev, responsible: value }))}
+                                  >
+                                    <SelectTrigger className="h-8 text-xs">
+                                      <SelectValue placeholder="Select Responsible" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="In-House">In-House</SelectItem>
+                                      <SelectItem value="Subcontractor">Subcontractor</SelectItem>
+                                      <SelectItem value="In-House Management">In-House Management</SelectItem>
+                                      <SelectItem value="Client">Client</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  onClick={handleSaveTaskEdit}
+                                  size="sm"
+                                  className="bg-brandPrimary hover:bg-brandPrimary/90 text-white"
+                                >
+                                  <Save className="h-3 w-3 mr-1" />
+                                  Save
+                                </Button>
+                                <Button
+                                  onClick={handleCancelTaskEdit}
+                                  variant="outline"
+                                  size="sm"
+                                >
+                                  <X className="h-3 w-3 mr-1" />
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            /* Regular Task Display */
+                            <div className="flex items-center space-x-3">
+                              <button
+                                onClick={() => handleToggleTask(task.id)}
+                                className={`flex-shrink-0 p-1 rounded-full transition-colors ${
+                                  task.completed 
+                                    ? 'text-green-600 hover:text-green-700' 
+                                    : 'text-gray-400 hover:text-gray-600'
+                                }`}
+                              >
+                                {task.completed ? (
+                                  <CheckCircle className="h-5 w-5" />
+                                ) : (
+                                  <Circle className="h-5 w-5" />
+                                )}
+                              </button>
+                              
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-medium ${
+                                  task.completed ? 'text-green-800 line-through' : 'text-gray-900'
+                                }`}>
+                                  {task.text}
+                                </p>
+                                
+                                {/* Specifications */}
+                                {task.specifications && (
+                                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                                    <div className="flex items-center space-x-1 mb-1">
+                                      <FileText className="h-3 w-3 text-blue-600" />
+                                      <span className="font-medium text-blue-800">Specifications:</span>
+                                    </div>
+                                    <p className="text-blue-700 leading-relaxed">{task.specifications}</p>
+                                  </div>
+                                )}
+                                
+                                <div className="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                                  {task.trade && (
+                                    <div className="flex items-center space-x-1">
+                                      <Hammer className="h-3 w-3" />
+                                      <span className="font-medium">{task.trade}</span>
+                                    </div>
+                                  )}
+                                  {task.responsible && (
+                                    <div className="flex items-center space-x-1">
+                                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                        task.responsible === 'In-House' 
+                                          ? 'bg-green-100 text-green-800' 
+                                          : 'bg-blue-100 text-blue-800'
+                                      }`}>
+                                        {task.responsible}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {task.assignedTo && (
+                                    <div className="flex items-center space-x-1">
+                                      <User className="h-3 w-3" />
+                                      <span>{getEmployeeName(task.assignedTo)}</span>
+                                    </div>
+                                  )}
+                                  {task.dueDate && (
+                                    <div className="flex items-center space-x-1">
+                                      <Calendar className="h-3 w-3" />
+                                      <span>{format(new Date(task.dueDate), 'MMM dd')}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center space-x-1">
+                                <Button
+                                  onClick={() => handleEditTask(task)}
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-blue-500 hover:bg-blue-100"
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                </Button>
+                                
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-red-500 hover:bg-red-100"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Task?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete this task? This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                        onClick={() => handleDeleteTask(task.id)}
+                                        className="bg-red-600 hover:bg-red-700"
+                                      >
+                                        Delete Task
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </div>
+                          )}
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 <div className="grid grid-cols-1 gap-4 pt-4">
                   <div className="bg-brandSecondary/10 rounded-lg p-4 text-center">

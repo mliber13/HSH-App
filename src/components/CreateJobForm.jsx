@@ -53,7 +53,7 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
     if (!formData.jobType) {
       toast({
         title: "Missing Information",
-        description: "Please select a job type (Residential or Commercial).",
+        description: "Please select a job type (Residential Drywall, Residential Construction, or Commercial).",
         variant: "destructive"
       });
       return;
@@ -89,6 +89,11 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
       projectManager: selectedPM ? selectedPM.name : ''
     };
 
+    console.log('=== CreateJobForm submitting ===');
+    console.log('Form data:', formData);
+    console.log('Job data being submitted:', jobData);
+    console.log('Job type:', jobData.jobType);
+
     onSubmit(jobData);
   };
 
@@ -114,11 +119,23 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
   // Get filtered lists based on selected GC
   const getFilteredSuperintendents = () => {
     if (!formData.generalContractorId) return [];
+    
+    // For in-house GC, show all superintendents (HSH Contractor's own team)
+    if (formData.generalContractorId === 'in-house') {
+      return superintendents;
+    }
+    
     return superintendents.filter(s => s.gcId === formData.generalContractorId);
   };
 
   const getFilteredProjectManagers = () => {
     if (!formData.generalContractorId) return [];
+    
+    // For in-house GC, show all project managers (HSH Contractor's own team)
+    if (formData.generalContractorId === 'in-house') {
+      return projectManagers;
+    }
+    
     return projectManagers.filter(pm => pm.gcId === formData.generalContractorId);
   };
 
@@ -167,7 +184,13 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
                     <SelectItem value="residential">
                       <div className="flex items-center space-x-2">
                         <Home className="h-4 w-4" />
-                        <span>Residential</span>
+                        <span>Residential (Drywall Only)</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="residential-construction">
+                      <div className="flex items-center space-x-2">
+                        <Home className="h-4 w-4" />
+                        <span>Residential Construction (Full Home)</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="commercial">
@@ -209,10 +232,17 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
                       {generalContractors.map(gc => (
                         <SelectItem key={gc.id} value={gc.id}>
                           <div className="flex items-center space-x-2">
-                            <Building className="h-4 w-4" />
-                            <span>{gc.name}</span>
-                            {gc.company && (
+                            {gc.isInHouse ? (
+                              <Building2 className="h-4 w-4 text-yellow-600" />
+                            ) : (
+                              <Building className="h-4 w-4" />
+                            )}
+                            <span className={gc.isInHouse ? "font-semibold text-yellow-600" : ""}>{gc.name}</span>
+                            {gc.company && !gc.isInHouse && (
                               <span className="text-xs text-gray-500">({gc.company})</span>
+                            )}
+                            {gc.isInHouse && (
+                              <span className="text-xs text-yellow-600 font-medium">(You are the GC)</span>
                             )}
                           </div>
                         </SelectItem>
@@ -282,6 +312,20 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
                   <p className="text-xs text-blue-600">
                     Select a General Contractor first to enable Superintendent and Project Manager selection. 
                     You can manage these contacts in the Client Portal.
+                  </p>
+                </div>
+              )}
+
+              {/* In-House GC Help text */}
+              {formData.generalContractorId === 'in-house' && (
+                <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Building2 className="h-4 w-4 text-yellow-600" />
+                    <span className="text-sm font-medium text-yellow-800">In-House General Contractor</span>
+                  </div>
+                  <p className="text-xs text-yellow-600">
+                    You are the General Contractor for this project. You can assign your own superintendents and project managers, 
+                    or leave these fields empty if you'll be managing the project directly.
                   </p>
                 </div>
               )}
@@ -355,25 +399,37 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
               <div className={`p-4 rounded-lg border-2 ${
                 formData.jobType === 'residential' 
                   ? 'bg-green-50 border-green-200' 
+                  : formData.jobType === 'residential-construction'
+                  ? 'bg-orange-50 border-orange-200'
                   : 'bg-blue-50 border-blue-200'
               }`}>
                 <div className="flex items-center space-x-2 mb-2">
                   {formData.jobType === 'residential' ? (
                     <Home className="h-5 w-5 text-green-600" />
+                  ) : formData.jobType === 'residential-construction' ? (
+                    <Home className="h-5 w-5 text-orange-600" />
                   ) : (
                     <Building className="h-5 w-5 text-blue-600" />
                   )}
                   <h4 className={`font-semibold ${
-                    formData.jobType === 'residential' ? 'text-green-800' : 'text-blue-800'
+                    formData.jobType === 'residential' ? 'text-green-800' 
+                    : formData.jobType === 'residential-construction' ? 'text-orange-800'
+                    : 'text-blue-800'
                   }`}>
-                    {formData.jobType === 'residential' ? 'Residential Job' : 'Commercial Job'}
+                    {formData.jobType === 'residential' ? 'Residential Drywall Job' 
+                     : formData.jobType === 'residential-construction' ? 'Full Home Construction'
+                     : 'Commercial Job'}
                   </h4>
                 </div>
                 <p className={`text-sm ${
-                  formData.jobType === 'residential' ? 'text-green-700' : 'text-blue-700'
+                  formData.jobType === 'residential' ? 'text-green-700' 
+                  : formData.jobType === 'residential-construction' ? 'text-orange-700'
+                  : 'text-blue-700'
                 }`}>
                   {formData.jobType === 'residential' 
                     ? 'Takeoffs will be organized by Floor/Space/Room names (e.g., "2nd Floor", "Master Bedroom", "Garage").'
+                    : formData.jobType === 'residential-construction'
+                    ? 'Full home construction with phases like Foundation, Framing, Drywall, and Finishing. Includes all trades and materials.'
                     : 'Takeoffs will be organized by Unit Types with multiple unit numbers (e.g., "Unit Type 1A" with units 501, 502, 503).'
                   }
                 </p>

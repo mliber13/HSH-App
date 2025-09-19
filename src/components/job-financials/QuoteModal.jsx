@@ -11,7 +11,7 @@ import { toast } from '@/components/ui/use-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-const QuoteModal = ({ job, estimateCalculations, onClose }) => {
+const QuoteModal = ({ job, estimateCalculations, onClose, isCommercial = false }) => {
   const [emailData, setEmailData] = useState({
     to: job?.clientEmail || '',
     subject: `Quote for ${job?.jobName || 'Project'}`,
@@ -19,21 +19,32 @@ const QuoteModal = ({ job, estimateCalculations, onClose }) => {
 
 Please find attached our detailed quote for the ${job?.jobName || 'project'}.
 
-The quote includes comprehensive hang and finish specifications with Level 4 finish (industry standard), all materials, and complete installation services.
+${isCommercial ? 
+  `This commercial quote includes comprehensive drywall installation services with detailed breakdown of all labor, materials, and equipment costs. The estimate covers all specified scopes of work with proper overhead and profit calculations.
 
-Total Quote Amount: $${estimateCalculations?.totalEstimate?.toFixed(2) || '0.00'}
+Bid Version: ${job?.financials?.commercialEstimate?.currentBidVersion || 'Initial'}` :
+  'The quote includes comprehensive hang and finish specifications with Level 4 finish (industry standard), all materials, and complete installation services.'
+}
+
+Total Quote Amount: $${isCommercial ? 
+  (estimateCalculations?.finalTotalEstimate || estimateCalculations?.totalWithTax || 0).toFixed(2) :
+  (estimateCalculations?.totalEstimate || 0).toFixed(2)
+}
 Payment Terms: Net 30 days upon completion
 
 We look forward to working with you on this project.
 
 Best regards,
-HSH Drywall Management`
+HSH Contractor Management`
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
 
   function getScopeOfWork(job) {
     let scopeText = "";
+    
+    // Check if this is an in-house GC project
+    const isInHouseGC = job?.generalContractor === 'In-House (HSH Contractor)';
     
     // Add job scopes if available
     if (job?.scopes && job.scopes.length > 0) {
@@ -44,9 +55,44 @@ HSH Drywall Management`
       scopeText += '\n';
     } else {
       scopeText += "SCOPE OF WORK:\n";
-      scopeText += "• Complete drywall installation and finishing services\n";
-      scopeText += "• Material supply and installation\n";
-      scopeText += "• Labor and equipment\n\n";
+      
+      if (job?.jobType === 'residential-construction') {
+        // Full home construction scope
+        scopeText += "• Complete residential home construction services\n";
+        scopeText += "• Foundation and site preparation coordination\n";
+        scopeText += "• Structural framing and carpentry\n";
+        scopeText += "• Drywall installation and finishing\n";
+        scopeText += "• Interior and exterior finishing coordination\n";
+        scopeText += "• Subcontractor management and oversight\n";
+        scopeText += "• Project management and quality control\n";
+        scopeText += "• Final walkthrough and client handover\n\n";
+      } else if (job?.jobType === 'commercial') {
+        scopeText += "• Complete commercial drywall installation and finishing services\n";
+        scopeText += "• ACT ceiling installation and finishing\n";
+        scopeText += "• Drywall wall and ceiling installation\n";
+        scopeText += "• Channel and suspended grid systems\n";
+        scopeText += "• Metal framing installation\n";
+        scopeText += "• Insulation installation\n";
+        scopeText += "• FRP panel installation\n";
+        scopeText += "• Door frame installation\n";
+        scopeText += "• All materials, labor, and equipment\n\n";
+      } else {
+        scopeText += "• Complete drywall installation and finishing services\n";
+        scopeText += "• Material supply and installation\n";
+        scopeText += "• Labor and equipment\n\n";
+      }
+    }
+    
+    // Add GC services section for in-house projects
+    if (isInHouseGC) {
+      scopeText += "GENERAL CONTRACTOR SERVICES:\n";
+      scopeText += "• HSH Contractor will serve as the General Contractor for this project\n";
+      scopeText += "• Complete project management and coordination\n";
+      scopeText += "• Subcontractor management and oversight\n";
+      scopeText += "• Quality control and inspection services\n";
+      scopeText += "• Schedule management and progress tracking\n";
+      scopeText += "• Client communication and updates\n";
+      scopeText += "• Final project delivery and warranty management\n\n";
     }
     
     // Add detailed specifications from scopes
@@ -113,15 +159,58 @@ HSH Drywall Management`
     }
     
     scopeText += "MATERIALS INCLUDED:\n";
-    scopeText += "• Drywall panels, joint compound, tape, and fasteners\n";
-    scopeText += "• Corner bead and edge trim\n";
-    scopeText += "• All necessary tools and equipment\n\n";
+    if (job?.jobType === 'residential-construction') {
+      scopeText += "• All construction materials for complete home build\n";
+      scopeText += "• Foundation and structural materials\n";
+      scopeText += "• Framing lumber and hardware\n";
+      scopeText += "• Drywall panels, joint compound, tape, and fasteners\n";
+      scopeText += "• Insulation materials and vapor barriers\n";
+      scopeText += "• Finishing materials and trim\n";
+      scopeText += "• All necessary tools and equipment\n";
+      scopeText += "• Material procurement and delivery coordination\n\n";
+    } else if (job?.jobType === 'commercial') {
+      scopeText += "• ACT ceiling tiles and grid systems\n";
+      scopeText += "• Drywall panels, joint compound, tape, and fasteners\n";
+      scopeText += "• Channel systems and suspended grid components\n";
+      scopeText += "• Metal studs, tracks, and framing materials\n";
+      scopeText += "• Insulation materials and vapor barriers\n";
+      scopeText += "• FRP panels and installation materials\n";
+      scopeText += "• Corner bead, edge trim, and finishing materials\n";
+      scopeText += "• All necessary tools and equipment\n\n";
+    } else {
+      scopeText += "• Drywall panels, joint compound, tape, and fasteners\n";
+      scopeText += "• Corner bead and edge trim\n";
+      scopeText += "• All necessary tools and equipment\n\n";
+    }
     
     scopeText += "EXCLUSIONS:\n";
-    scopeText += "• Painting and final decoration\n";
-    scopeText += "• Electrical, plumbing, or HVAC work\n";
-    scopeText += "• Structural modifications\n";
-    scopeText += "• Additional work not specified in this quote";
+    if (job?.jobType === 'residential-construction') {
+      scopeText += "• Landscaping and exterior hardscaping\n";
+      scopeText += "• Appliances and fixtures (unless specified)\n";
+      scopeText += "• Final painting and decoration (unless specified)\n";
+      scopeText += "• Permits and inspections (client responsibility)\n";
+      scopeText += "• Additional work not specified in this quote\n";
+    } else {
+      scopeText += "• Painting and final decoration\n";
+      scopeText += "• Electrical, plumbing, or HVAC work\n";
+      scopeText += "• Structural modifications\n";
+      scopeText += "• Additional work not specified in this quote\n";
+    }
+    
+    // Add warranty information for GC projects
+    if (isInHouseGC || job?.jobType === 'residential-construction') {
+      scopeText += "\nWARRANTY:\n";
+      if (job?.jobType === 'residential-construction') {
+        scopeText += "• 2-year warranty on workmanship for full construction projects\n";
+        scopeText += "• 1-year warranty on drywall and finishing work\n";
+        scopeText += "• Materials warranty per manufacturer specifications\n";
+        scopeText += "• Comprehensive warranty management and service\n";
+      } else {
+        scopeText += "• 1-year warranty on workmanship\n";
+        scopeText += "• Materials warranty per manufacturer specifications\n";
+        scopeText += "• Professional project management warranty\n";
+      }
+    }
     
     return scopeText;
   }
@@ -142,7 +231,7 @@ HSH Drywall Management`
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont(undefined, 'bold');
-      doc.text('HSH Drywall Management', pageWidth / 2, 15, { align: 'center' });
+      doc.text('HSH Contractor Management', pageWidth / 2, 15, { align: 'center' });
       
       doc.setFontSize(12);
       doc.setFont(undefined, 'normal');
@@ -177,7 +266,12 @@ HSH Drywall Management`
       doc.text(`Project Type: ${job?.jobType === 'residential' ? 'Residential' : 'Commercial'}`, 14, yPos);
       yPos += 6;
       doc.text(`Quote Date: ${new Date().toLocaleDateString()}`, 14, yPos);
-      yPos += 15;
+      yPos += 6;
+      if (isCommercial && job?.financials?.commercialEstimate?.currentBidVersion) {
+        doc.text(`Bid Version: ${job.financials.commercialEstimate.currentBidVersion}`, 14, yPos);
+        yPos += 6;
+      }
+      yPos += 9;
 
       // Scope of Work
       doc.setFont(undefined, 'bold');
@@ -198,14 +292,44 @@ HSH Drywall Management`
       doc.text('Cost Breakdown:', 14, yPos);
       yPos += 8;
 
-      const tableColumn = ['Description', 'Rate', 'Quantity', 'Amount'];
-      const tableRows = [
-        ['Drywall Material', `$${estimateCalculations?.drywallMaterialRate?.toFixed(2) || '0.00'}/sqft`, `${estimateCalculations?.sqft?.toLocaleString() || '0'} sqft`, `$${estimateCalculations?.materialCost?.toFixed(2) || '0.00'}`],
-        ['Hanging Labor', `$${estimateCalculations?.hangerRate?.toFixed(2) || '0.00'}/sqft`, `${estimateCalculations?.sqft?.toLocaleString() || '0'} sqft`, `$${estimateCalculations?.hangerCost?.toFixed(2) || '0.00'}`],
-        ['Finishing Labor', `$${estimateCalculations?.finisherRate?.toFixed(2) || '0.00'}/sqft`, `${estimateCalculations?.sqft?.toLocaleString() || '0'} sqft`, `$${estimateCalculations?.finisherCost?.toFixed(2) || '0.00'}`],
-        ['Prep/Clean Labor', `$${estimateCalculations?.prepCleanRate?.toFixed(2) || '0.00'}/sqft`, `${estimateCalculations?.sqft?.toLocaleString() || '0'} sqft`, `$${estimateCalculations?.prepCleanCost?.toFixed(2) || '0.00'}`],
-        ['Sales Tax', `${estimateCalculations?.drywallSalesTaxRate?.toFixed(2) || '0.00'}%`, '', `$${estimateCalculations?.salesTax?.toFixed(2) || '0.00'}`]
-      ];
+      let tableColumn, tableRows;
+      
+      if (isCommercial) {
+        // Commercial estimate breakdown
+        tableColumn = ['Category', 'Description', 'Amount'];
+        tableRows = [
+          ['Equipment', 'Equipment Costs', `$${estimateCalculations?.equipment?.toFixed(2) || '0.00'}`],
+          ['Labor', 'ACT Labor', `$${estimateCalculations?.actLabor?.toFixed(2) || '0.00'}`],
+          ['Labor', 'Drywall Labor', `$${estimateCalculations?.drywallLabor?.toFixed(2) || '0.00'}`],
+          ['Labor', 'Channel Labor', `$${estimateCalculations?.channelLabor?.toFixed(2) || '0.00'}`],
+          ['Labor', 'Suspended Grid Labor', `$${estimateCalculations?.suspendedGridLabor?.toFixed(2) || '0.00'}`],
+          ['Labor', 'Metal Framing Labor', `$${estimateCalculations?.metalFramingLabor?.toFixed(2) || '0.00'}`],
+          ['Labor', 'Insulation Labor', `$${estimateCalculations?.insulationLabor?.toFixed(2) || '0.00'}`],
+          ['Labor', 'FRP Labor', `$${estimateCalculations?.frpLabor?.toFixed(2) || '0.00'}`],
+          ['Labor', 'Door Install Labor', `$${estimateCalculations?.doorInstallLabor?.toFixed(2) || '0.00'}`],
+          ['Materials', 'ACT Material', `$${estimateCalculations?.actMaterial?.toFixed(2) || '0.00'}`],
+          ['Materials', 'Drywall Material', `$${estimateCalculations?.drywallMaterial?.toFixed(2) || '0.00'}`],
+          ['Materials', 'Channel Material', `$${estimateCalculations?.channelMaterial?.toFixed(2) || '0.00'}`],
+          ['Materials', 'Suspended Grid Material', `$${estimateCalculations?.suspendedGridMaterial?.toFixed(2) || '0.00'}`],
+          ['Materials', 'Metal Framing Material', `$${estimateCalculations?.metalFramingMaterial?.toFixed(2) || '0.00'}`],
+          ['Materials', 'Insulation Material', `$${estimateCalculations?.insulationMaterial?.toFixed(2) || '0.00'}`],
+          ['Materials', 'FRP Material', `$${estimateCalculations?.frpMaterial?.toFixed(2) || '0.00'}`],
+          ['', 'Subtotal (Direct Costs)', `$${estimateCalculations?.totalDirectCost?.toFixed(2) || '0.00'}`],
+          ['', `Overhead (${estimateCalculations?.overheadPercentage?.toFixed(1) || '0'}%)`, `$${estimateCalculations?.overheadAmount?.toFixed(2) || '0.00'}`],
+          ['', `Profit (${estimateCalculations?.profitPercentage?.toFixed(1) || '0'}%)`, `$${estimateCalculations?.profitAmount?.toFixed(2) || '0.00'}`],
+          ['', 'Sales Tax (Materials Only)', `$${estimateCalculations?.salesTax?.toFixed(2) || '0.00'}`]
+        ];
+      } else {
+        // Residential estimate breakdown
+        tableColumn = ['Description', 'Rate', 'Quantity', 'Amount'];
+        tableRows = [
+          ['Drywall Material', `$${estimateCalculations?.drywallMaterialRate?.toFixed(2) || '0.00'}/sqft`, `${estimateCalculations?.sqft?.toLocaleString() || '0'} sqft`, `$${estimateCalculations?.materialCost?.toFixed(2) || '0.00'}`],
+          ['Hanging Labor', `$${estimateCalculations?.hangerRate?.toFixed(2) || '0.00'}/sqft`, `${estimateCalculations?.sqft?.toLocaleString() || '0'} sqft`, `$${estimateCalculations?.hangerCost?.toFixed(2) || '0.00'}`],
+          ['Finishing Labor', `$${estimateCalculations?.finisherRate?.toFixed(2) || '0.00'}/sqft`, `${estimateCalculations?.sqft?.toLocaleString() || '0'} sqft`, `$${estimateCalculations?.finisherCost?.toFixed(2) || '0.00'}`],
+          ['Prep/Clean Labor', `$${estimateCalculations?.prepCleanRate?.toFixed(2) || '0.00'}/sqft`, `${estimateCalculations?.sqft?.toLocaleString() || '0'} sqft`, `$${estimateCalculations?.prepCleanCost?.toFixed(2) || '0.00'}`],
+          ['Sales Tax', `${estimateCalculations?.drywallSalesTaxRate?.toFixed(2) || '0.00'}%`, '', `$${estimateCalculations?.salesTax?.toFixed(2) || '0.00'}`]
+        ];
+      }
 
       doc.autoTable({
         head: [tableColumn],
@@ -214,7 +338,11 @@ HSH Drywall Management`
         theme: 'grid',
         headStyles: { fillColor: [207, 83, 62] }, // brandPrimary
         styles: { fontSize: 10 },
-        columnStyles: {
+        columnStyles: isCommercial ? {
+          0: { cellWidth: 30, halign: 'center' },
+          1: { cellWidth: 80, halign: 'left' },
+          2: { cellWidth: 35, halign: 'right', fontStyle: 'bold' }
+        } : {
           0: { cellWidth: 60 },
           1: { cellWidth: 35, halign: 'right' },
           2: { cellWidth: 35, halign: 'right' },
@@ -224,11 +352,66 @@ HSH Drywall Management`
 
       yPos = doc.lastAutoTable.finalY + 10;
 
+      // Add breakdown information if available
+      if (isCommercial && job?.financials?.commercialEstimate?.breakdowns?.length > 0) {
+        doc.setFont(undefined, 'bold');
+        doc.text('Project Breakdowns:', 14, yPos);
+        yPos += 8;
+        
+        doc.setFont(undefined, 'normal');
+        job.financials.commercialEstimate.breakdowns.forEach((breakdown, index) => {
+          if (yPos > pageHeight - 60) {
+            doc.addPage();
+            yPos = 20;
+          }
+          
+          doc.setFont(undefined, 'bold');
+          doc.text(`${breakdown.name}:`, 14, yPos);
+          yPos += 6;
+          
+          doc.setFont(undefined, 'normal');
+          const breakdownEquipment = breakdown.equipmentCost || 0;
+          const breakdownLabor = (
+            ((breakdown.actLaborQty || 0) * (1 + (breakdown.actLaborWaste || 0) / 100) * (breakdown.actLaborUnitCost || 0)) +
+            ((breakdown.drywallLaborQty || 0) * (1 + (breakdown.drywallLaborWaste || 0) / 100) * (breakdown.drywallLaborUnitCost || 0)) +
+            ((breakdown.channelLaborQty || 0) * (1 + (breakdown.channelLaborWaste || 0) / 100) * (breakdown.channelLaborUnitCost || 0)) +
+            ((breakdown.suspendedGridLaborQty || 0) * (1 + (breakdown.suspendedGridLaborWaste || 0) / 100) * (breakdown.suspendedGridLaborUnitCost || 0)) +
+            ((breakdown.metalFramingLaborQty || 0) * (1 + (breakdown.metalFramingLaborWaste || 0) / 100) * (breakdown.metalFramingLaborUnitCost || 0)) +
+            ((breakdown.insulationLaborQty || 0) * (1 + (breakdown.insulationLaborWaste || 0) / 100) * (breakdown.insulationLaborUnitCost || 0)) +
+            ((breakdown.frpLaborQty || 0) * (1 + (breakdown.frpLaborWaste || 0) / 100) * (breakdown.frpLaborUnitCost || 0)) +
+            ((breakdown.doorInstallLaborQty || 0) * (1 + (breakdown.doorInstallLaborWaste || 0) / 100) * (breakdown.doorInstallLaborUnitCost || 0))
+          );
+          const breakdownMaterials = (
+            (breakdown.actMaterialCost || 0) +
+            (breakdown.drywallMaterialCost || 0) +
+            (breakdown.channelMaterialCost || 0) +
+            (breakdown.suspendedGridMaterialCost || 0) +
+            (breakdown.metalFramingMaterialCost || 0) +
+            (breakdown.insulationMaterialCost || 0) +
+            (breakdown.frpMaterialCost || 0)
+          );
+          const breakdownTotal = breakdownEquipment + breakdownLabor + breakdownMaterials;
+          
+          doc.text(`  Equipment: $${breakdownEquipment.toFixed(2)}`, 20, yPos);
+          yPos += 5;
+          doc.text(`  Labor: $${breakdownLabor.toFixed(2)}`, 20, yPos);
+          yPos += 5;
+          doc.text(`  Materials: $${breakdownMaterials.toFixed(2)}`, 20, yPos);
+          yPos += 5;
+          doc.setFont(undefined, 'bold');
+          doc.text(`  Subtotal: $${breakdownTotal.toFixed(2)}`, 20, yPos);
+          yPos += 8;
+        });
+      }
+
       // Total section
       doc.setFont(undefined, 'bold');
       doc.setFontSize(14);
       doc.text('Total Quote Amount:', pageWidth - 80, yPos);
-      doc.text(`$${estimateCalculations?.totalEstimate?.toFixed(2) || '0.00'}`, pageWidth - 20, yPos, { align: 'right' });
+      const totalAmount = isCommercial ? 
+        (estimateCalculations?.finalTotalEstimate || estimateCalculations?.totalWithTax || 0) :
+        (estimateCalculations?.totalEstimate || 0);
+      doc.text(`$${totalAmount.toFixed(2)}`, pageWidth - 20, yPos, { align: 'right' });
       yPos += 20;
 
       // Terms and conditions
@@ -239,16 +422,16 @@ HSH Drywall Management`
       
       doc.setFont(undefined, 'normal');
       doc.setFontSize(10);
-             const terms = [
-         '• This quote is valid for 30 days from the date of issue',
-         '• Payment terms: Net 30 days upon completion of work',
-         '• Project timeline will be determined upon contract signing',
-         '• All work includes standard drywall installation and finishing',
-         '• Additional work or changes will be quoted separately',
-         '• We carry full liability and workers compensation insurance',
-         '• Work area must be ready for drywall installation (framing complete, electrical/plumbing rough-in complete)',
-         '• Client is responsible for providing access to work area during normal business hours'
-       ];
+      const terms = [
+        '• This quote is valid for 30 days from the date of issue',
+        '• Payment terms: Net 30 days upon completion of work',
+        '• Project timeline will be determined upon contract signing',
+        '• All work includes standard drywall installation and finishing',
+        '• Additional work or changes will be quoted separately',
+        '• We carry full liability and workers compensation insurance',
+        '• Work area must be ready for drywall installation (framing complete, electrical/plumbing rough-in complete)',
+        '• Client is responsible for providing access to work area during normal business hours'
+      ];
       
       terms.forEach(term => {
         doc.text(term, 14, yPos);
@@ -259,7 +442,7 @@ HSH Drywall Management`
       yPos = pageHeight - 30;
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
-      doc.text('Thank you for considering HSH Drywall Management for your project.', pageWidth / 2, yPos, { align: 'center' });
+      doc.text('Thank you for considering HSH Contractor Management for your project.', pageWidth / 2, yPos, { align: 'center' });
       yPos += 6;
       doc.text('For questions or to proceed with this quote, please contact us.', pageWidth / 2, yPos, { align: 'center' });
 
@@ -376,6 +559,11 @@ HSH Drywall Management`
                     <div>
                       <span className="font-semibold">Total Quote:</span> ${estimateCalculations?.totalEstimate?.toFixed(2) || '0.00'}
                     </div>
+                    {isCommercial && job?.financials?.commercialEstimate?.currentBidVersion && (
+                      <div>
+                        <span className="font-semibold">Bid Version:</span> {job.financials.commercialEstimate.currentBidVersion}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

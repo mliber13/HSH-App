@@ -28,7 +28,7 @@ import { toast } from '@/components/ui/use-toast';
 
 const OnboardingForm = ({ employee, onSend, onCancel }) => {
   const [formData, setFormData] = useState({
-    message: `Hi ${employee.firstName},\n\nWelcome to HSH Drywall! Please complete the following onboarding documents at your earliest convenience.\n\nBest regards,\nHSH HR Team`,
+    message: `Hi ${employee.firstName},\n\nWelcome to HSH Contractor! Please complete the following onboarding documents at your earliest convenience.\n\nBest regards,\nHSH HR Team`,
     documents: [],
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days from now
     sendEmail: true,

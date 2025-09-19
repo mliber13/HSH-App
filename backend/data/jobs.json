@@ -1,0 +1,19 @@
+[
+  {
+    "id": "1757095747691x44z2pq38",
+    "createdAt": "2025-09-05T18:09:07.692Z",
+    "updatedAt": "2025-09-05T18:09:07.692Z",
+    "name": "Test Job from API",
+    "address": "123 Test Street",
+    "status": "estimating",
+    "type": "residential",
+    "startDate": "2025-09-05T18:09:07.672Z",
+    "estimate": 0,
+    "actual": 0,
+    "scopes": [],
+    "takeoffPhases": [],
+    "checklists": [],
+    "documents": [],
+    "dailyLogs": []
+  }
+]

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building2, Plus, ArrowLeft, Clock, DollarSign, LogOut, Calendar, Database, BarChart3, FileText, DollarSign as DollarSignIcon, Warehouse, TrendingUp, MapPin, Truck, Globe, Users, Settings, Users as UsersIcon, Calculator, X, Building2 as Building2Icon } from 'lucide-react';
+import { Building2, Plus, ArrowLeft, Clock, DollarSign, LogOut, Calendar, Database, BarChart3, FileText, DollarSign as DollarSignIcon, Warehouse, TrendingUp, MapPin, Truck, Globe, Users, Settings, Users as UsersIcon, Calculator, X, Building2 as Building2Icon, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import NavigationDropdown from '@/components/ui/navigation-dropdown';
@@ -27,6 +27,7 @@ import CashFlowPanel from '@/components/CashFlowPanel';
 import SupplierManagementPanel from '@/components/SupplierManagementPanel';
 import ClientPortalPanel from '@/components/ClientPortalPanel';
 import QuickBooksConnection from '@/components/quickbooks/QuickBooksConnection';
+import CommercialProjectManager from '@/components/CommercialProjectManager';
 
 import AuthWrapper from '@/components/AuthWrapper';
 import DataManager from '@/components/DataManager';
@@ -184,8 +185,16 @@ function AppContent({ onLogout }) {
   }, []);
 
   const handleAddDefaultScopes = useCallback((jobId) => {
-    addDefaultScopesToJob(jobId);
-  }, [addDefaultScopesToJob]);
+    console.log('=== handleAddDefaultScopes called ===');
+    console.log('JobId:', jobId);
+    console.log('addDefaultScopesToJob function:', addDefaultScopesToJob);
+    
+    // Add a small delay to ensure the job is properly saved to state
+    setTimeout(() => {
+      console.log('=== Calling addDefaultScopesToJob ===');
+      addDefaultScopesToJob(jobId);
+    }, 100);
+  }, [addDefaultScopesToJob]); // Force refresh
 
   const getUserData = () => {
     const userData = localStorage.getItem('userData');
@@ -233,7 +242,6 @@ function AppContent({ onLogout }) {
                     setSelectedScope(null);
                     setSelectedTakeoffPhaseId(null);
                     setIsCreateScopeModalOpen(false);
-                    setHeaderSelectedJobId('');
                   }
                 }}
                 className="text-white hover:bg-white/20"
@@ -245,7 +253,7 @@ function AppContent({ onLogout }) {
             {/* Logo - Fixed width to prevent compression */}
             <div className="flex-shrink-0">
               <div className="bg-white p-1 md:p-2 rounded-md">
-               <img src="/Logo.png" alt="HSH Drywall" className="h-10 md:h-16" />
+               <img src="/Logo.png" alt="HSH Contractor" className="h-10 md:h-16" />
               </div>
             </div>
 
@@ -266,7 +274,7 @@ function AppContent({ onLogout }) {
                 >
                   <Building2 className="h-4 w-4 mr-1 mb-1" />
                   <div className="text-center">
-                    Job<br />Dashboard
+                    Project<br />Dashboard
                   </div>
                 </Button>
               </div>
@@ -314,7 +322,8 @@ function AppContent({ onLogout }) {
                 { value: 'cash-flow', label: 'Cash Flow', icon: TrendingUp },
                 { value: 'invoice-processing', label: 'Invoice Processing', icon: FileText },
                 { value: 'material-pricing', label: 'Material Pricing', icon: DollarSignIcon },
-                { value: 'quickbooks', label: 'QuickBooks', icon: Building2Icon }
+                { value: 'quickbooks', label: 'QuickBooks', icon: Building2Icon },
+                { value: 'commercial-project-manager', label: 'Commercial PM', icon: Bot }
               ]}
             />
             
@@ -435,6 +444,10 @@ function AppContent({ onLogout }) {
       return <QuickBooksConnection />;
     }
 
+    if (currentMainView === 'commercial-project-manager') {
+      return <CommercialProjectManager jobs={jobs} />;
+    }
+
 
 
     // Jobs view router
@@ -443,8 +456,8 @@ function AppContent({ onLogout }) {
         return (
           <JobsList 
             jobs={jobs}
-            onSelectJob={(job) => {
-              setSelectedJobId(job.id);
+            onSelectJob={(selectedJobItem) => {
+              setSelectedJobId(selectedJobItem.id);
               setCurrentJobView('job-details');
             }}
             onDeleteJob={(jobId) => deleteJob(jobId, handleJobDeleted)}
@@ -469,7 +482,7 @@ function AppContent({ onLogout }) {
               setSelectedScope(scope);
               setCurrentJobView('scope-details');
             }}
-            onAddDefaultScopes={() => handleAddDefaultScopes(selectedJob.id)}
+            onAddDefaultScopes={handleAddDefaultScopes}
             onCreateTakeoffPhase={() => setCurrentJobView('create-takeoff-phase')}
             onAddTakeoffEntry={(phaseId) => {
               setSelectedTakeoffPhaseId(phaseId);
@@ -484,14 +497,6 @@ function AppContent({ onLogout }) {
             onShowFinancials={() => setCurrentJobView('job-financials')}
             onDeleteJob={(jobId) => deleteJob(jobId, handleJobDeleted)}
             onDeleteTakeoffPhase={(jobId, phaseId) => deleteTakeoffPhase(jobId, phaseId, handleTakeoffPhaseDeleted)}
-            // Checklist props
-            onCreateChecklist={(jobId, checklistData, callback) => createChecklist(jobId, checklistData, callback)}
-            onUpdateChecklist={(jobId, checklistId, updatedChecklist, callback) => updateChecklist(jobId, checklistId, updatedChecklist, callback)}
-            onDeleteChecklist={(jobId, checklistId, callback) => deleteChecklist(jobId, checklistId, callback)}
-            onCompleteChecklist={(jobId, checklistId, callback) => completeChecklist(jobId, checklistId, callback)}
-            onSaveChecklistTemplate={(templateData, callback) => saveChecklistTemplate(templateData, callback)}
-            onGetChecklistTemplates={() => getChecklistTemplates()}
-            onDeleteChecklistTemplate={(templateId, callback) => deleteChecklistTemplate(templateId, callback)}
             employees={employees}
             onGoToScheduleForJob={goToScheduleForJob}
             // Document props
@@ -525,6 +530,7 @@ function AppContent({ onLogout }) {
             jobId={selectedJob?.id}
             onUpdateScope={(scopeId, updates) => updateScope(scopeId, updates, handleScopeUpdated)}
             onDeleteScope={(jobId, scopeId) => deleteScope(jobId, scopeId, handleScopeDeleted)}
+            employees={employees}
           />
         );
       
@@ -611,7 +617,7 @@ function AppContent({ onLogout }) {
             className="flex flex-col items-center space-y-1 h-12 px-3"
           >
             <Building2 className="h-5 w-5" />
-            <span className="text-xs">Jobs</span>
+            <span className="text-xs">Projects</span>
           </Button>
 
           {/* Center - Hamburger Menu */}

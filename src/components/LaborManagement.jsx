@@ -40,13 +40,13 @@ const LaborManagement = ({
                 </div>
                 <div>
                   <CardTitle className="text-3xl font-bold">Labor Management</CardTitle>
-                  <p className="text-white/80 mt-1">Employee & Contractor Management</p>
+                  <p className="text-white/80 mt-1">Employee, Crew & Contractor Management</p>
                 </div>
               </div>
             </div>
           </CardHeader>
           
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-6">
             <div className="flex items-center space-x-3">
               <Users className="h-5 w-5 text-white/70" />
               <div>
@@ -66,6 +66,20 @@ const LaborManagement = ({
               <div>
                 <p className="text-white/70 text-sm">1099 Contractors</p>
                 <p className="font-semibold text-2xl">{employees.filter(emp => emp.employeeType === '1099 Contractor').length}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Users className="h-5 w-5 text-white/70" />
+              <div>
+                <p className="text-white/70 text-sm">Drywall Crew</p>
+                <p className="font-semibold text-2xl">{employees.filter(emp => emp.crewType === 'Drywall Crew').length}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Users className="h-5 w-5 text-white/70" />
+              <div>
+                <p className="text-white/70 text-sm">Framing Crew</p>
+                <p className="font-semibold text-2xl">{employees.filter(emp => emp.crewType === 'Framing Crew').length}</p>
               </div>
             </div>
           </CardContent>
@@ -96,6 +110,22 @@ const LaborManagement = ({
         >
           <FileText className="h-4 w-4 mr-2" />
           1099 Contractors
+        </Button>
+        <Button
+          onClick={() => setCurrentView('drywall-crew')}
+          variant={currentView === 'drywall-crew' ? 'default' : 'outline'}
+          className={currentView === 'drywall-crew' ? 'bg-gradient-to-r from-brandPrimary to-brandSecondary text-white' : ''}
+        >
+          <Users className="h-4 w-4 mr-2" />
+          Drywall Crew
+        </Button>
+        <Button
+          onClick={() => setCurrentView('framing-crew')}
+          variant={currentView === 'framing-crew' ? 'default' : 'outline'}
+          className={currentView === 'framing-crew' ? 'bg-gradient-to-r from-brandPrimary to-brandSecondary text-white' : ''}
+        >
+          <Users className="h-4 w-4 mr-2" />
+          Framing Crew
         </Button>
         <Button
           onClick={() => setCurrentView('onboarding')}
@@ -134,7 +164,13 @@ const LaborManagement = ({
             useBankedHours={useBankedHours}
             addEmployeeDocument={addEmployeeDocument}
             removeEmployeeDocument={removeEmployeeDocument}
-            filterType={currentView === 'employees-only' ? 'Employee' : currentView === 'contractors' ? '1099 Contractor' : 'all'}
+            filterType={
+              currentView === 'employees-only' ? 'Employee' 
+              : currentView === 'contractors' ? '1099 Contractor' 
+              : currentView === 'drywall-crew' ? 'Drywall Crew'
+              : currentView === 'framing-crew' ? 'Framing Crew'
+              : 'all'
+            }
           />
         </div>
       )}

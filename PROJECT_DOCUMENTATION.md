@@ -1,4 +1,4 @@
-# HSH Drywall Construction Management Application
+HSH Contractor Construction Management Application
 ## Complete Project Documentation
 
 ### Table of Contents
@@ -17,7 +17,7 @@
 
 ## Project Overview
 
-**Application Name**: HSH Drywall Construction Management System  
+**Application Name**: HSH Contractor Construction Management System  
 **Purpose**: Comprehensive construction project management application for drywall contractors  
 **Target Users**: Project managers, schedulers, field workers, accounting staff  
 **Current Status**: Core functionality implemented, ready for final development phase
@@ -234,6 +234,186 @@ src/
 - `AnalyticsDashboard.jsx`: Main analytics view
 - `AnalyticsCharts.jsx`: Chart components
 - `CashFlowPanel.jsx`: Cash flow analysis
+
+---
+
+## Commercial Financials System
+
+The commercial financials system provides a comprehensive estimating worksheet specifically designed for commercial drywall projects. This system differs significantly from the residential financials and includes advanced features for managing complex project breakdowns and multiple bid versions.
+
+### Key Features
+
+#### 1. Detailed Line Item Breakdown
+The commercial estimate includes comprehensive line items for:
+- **Equipment Costs**: All equipment and tool costs
+- **Labor Costs**: Detailed worksheet format for each labor type
+- **Material Costs**: All material expenses
+- **Overhead & Profit**: Configurable percentages
+- **Sales Tax**: Applied to materials only
+
+#### 2. Labor Worksheet Format
+Each labor type (ACT, Drywall, Channel, Suspended Grid, Metal Framing, Insulation, FRP, Door Install) includes:
+- **Quantity (Qty)**: Amount of work to be performed
+- **Unit**: Measurement unit (sqft, linear ft, each)
+- **Waste Percentage**: Configurable waste factor
+- **Adjusted Quantity**: Automatically calculated (Qty × (1 + Waste% / 100))
+- **Unit Cost**: Pay rate per unit
+- **Total Cost**: Calculated total (Adjusted Qty × Unit Cost)
+
+#### 3. Project Breakdowns
+Support for dividing projects into logical sections:
+- **Breakdown Management**: Add/remove breakdown sections (e.g., "1st Floor", "2nd Floor", "West Wing")
+- **Individual Tracking**: Each breakdown maintains its own cost data
+- **Summary View**: Overview of all breakdowns with subtotals
+- **PDF Integration**: Breakdown information included in generated quotes
+
+#### 4. Multiple Bid Versions
+Support for managing different versions of the same estimate:
+- **Version Control**: Create and manage multiple bid versions (e.g., "Initial", "Pre-Construction", "Final")
+- **Data Persistence**: Each version stores complete estimate data
+- **Easy Switching**: Switch between versions to compare or update estimates
+- **Quote Integration**: Current bid version displayed in quotes and PDFs
+
+#### 5. Advanced Calculations
+- **Real-time Updates**: All calculations update automatically as values change
+- **Waste Calculations**: Automatic adjustment for material waste
+- **Overhead & Profit**: Applied to direct costs
+- **Sales Tax**: Calculated on materials only
+- **Breakdown Totals**: Individual and combined breakdown calculations
+
+### Data Structure
+
+The commercial estimate data is stored in `job.financials.commercialEstimate` with the following structure:
+
+```javascript
+{
+  // Bid version management
+  currentBidVersion: "initial",
+  bidVersions: ["initial", "pre-construction", "final"],
+  bidVersionData: {
+    "initial": { /* complete estimate data */ },
+    "pre-construction": { /* complete estimate data */ },
+    "final": { /* complete estimate data */ }
+  },
+  
+  // Breakdowns
+  breakdowns: [
+    {
+      id: "unique-id",
+      name: "1st Floor",
+      equipmentCost: 0,
+      actLaborQty: 0,
+      actLaborUnit: "sqft",
+      actLaborWaste: 5,
+      actLaborUnitCost: 0.85,
+      // ... all other fields for each breakdown
+    }
+  ],
+  
+  // Main estimate data
+  equipmentCost: 0,
+  actLaborQty: 0,
+  actLaborUnit: "sqft",
+  actLaborWaste: 5,
+  actLaborUnitCost: 0.85,
+  // ... all other estimate fields
+}
+```
+
+### User Interface
+
+#### Bid Version Management
+- **Current Version Selector**: Dropdown to switch between bid versions
+- **New Version Creation**: Input field to create new bid versions
+- **Version History**: List of all available versions
+
+#### Breakdown Management
+- **Add Breakdowns**: Input field to add new breakdown sections
+- **Breakdown List**: Display of all current breakdowns with remove options
+- **Breakdown Summary**: Detailed view of each breakdown's costs
+
+#### Estimate Worksheet
+- **Labor Table**: Spreadsheet-style interface for labor calculations
+- **Material Inputs**: Direct cost inputs for materials
+- **Real-time Totals**: Automatic calculation updates
+- **Summary Section**: Comprehensive cost breakdown with overhead and profit
+
+### Quote Generation
+
+The system generates professional PDF quotes that include:
+- **Project Information**: Name, type, date, bid version
+- **Scope of Work**: Detailed project specifications
+- **Cost Breakdown**: Complete line item breakdown
+- **Breakdown Summary**: Individual breakdown totals
+- **Terms & Conditions**: Standard contract terms
+- **Professional Branding**: Company logo and contact information
+
+### Benefits
+
+1. **Professional Estimating**: Spreadsheet-like interface familiar to estimators
+2. **Project Organization**: Logical breakdowns for complex projects
+3. **Version Control**: Track estimate evolution throughout project lifecycle
+4. **Accurate Calculations**: Automatic waste and overhead calculations
+5. **Professional Quotes**: Ready-to-send PDF quotes with all project details
+6. **Data Persistence**: Complete estimate history and version management
+
+This system provides commercial contractors with the tools needed to create detailed, professional estimates while maintaining flexibility for project changes and multiple bid scenarios.
+
+---
+
+## Material Costs Section
+
+The Material Costs section has been transformed from simple bulk input fields to a comprehensive worksheet system similar to the Labor Costs table. This provides detailed tracking and calculation capabilities for all material expenses.
+
+### Features
+
+- **Material Worksheet Table**: Each material line item includes:
+  - Material name (ACT, Drywall, Channel, Suspended Grid, Metal Framing, Insulation, FRP)
+  - Quantity input field
+  - Unit selection (sqft, linear ft, each, lbs, sheets, sticks, grids, studs, batts, panels)
+  - Waste percentage (editable, defaults to 5%)
+  - Adjusted quantity (automatically calculated: Qty × (1 + Waste% / 100))
+  - Unit cost (from pricing table)
+  - Extended cost (Adjusted Qty × Unit Cost)
+
+- **Import Panel**: 
+  - File upload support for CSV/XLSX files (Togal export format)
+  - Template download for proper file formatting
+  - Automatic population of material data from external sources
+
+- **Real-time Calculations**: 
+  - Material costs are calculated automatically as quantities, waste percentages, or unit costs change
+  - Total material cost updates in real-time
+  - Breakdown summaries reflect the new calculation method
+
+### Data Structure
+
+Each material type now stores:
+```javascript
+{
+  actMaterialQty: 0,           // Quantity
+  actMaterialUnit: 'sqft',     // Unit of measurement
+  actMaterialWaste: 5,         // Waste percentage
+  actMaterialUnitCost: 0.45,   // Cost per unit
+  // ... similar for all material types
+}
+```
+
+### Calculation Logic
+
+Material costs are calculated using the formula:
+```
+Extended Cost = Quantity × (1 + Waste% / 100) × Unit Cost
+```
+
+This ensures that waste factors are properly accounted for in material estimates, providing more accurate cost projections.
+
+### Integration with Existing Features
+
+- **Breakdowns**: Each project breakdown now includes the detailed material worksheet fields
+- **Bid Versions**: Material worksheet data is saved and loaded with bid version changes
+- **Quote Generation**: PDF quotes include the detailed material breakdown
+- **Total Calculations**: Material costs contribute to overall estimate totals
 
 ---
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EstimateTab from './EstimateTab';
+import CommercialEstimateTab from './CommercialEstimateTab';
 import FieldRevisedTab from './FieldRevisedTab';
 import ActualTab from './ActualTab';
 import OverviewTab from './OverviewTab';
@@ -24,7 +25,11 @@ const JobFinancials = ({ job, onUpdateJob, disableAutoSyncTemporarily, forceReca
         </TabsList>
 
         <TabsContent value="estimate" className="space-y-6">
-          <EstimateTab job={job} onUpdateJob={onUpdateJob} />
+          {job?.jobType === 'commercial' ? (
+            <CommercialEstimateTab job={job} onUpdateJob={onUpdateJob} />
+          ) : (
+            <EstimateTab job={job} onUpdateJob={onUpdateJob} />
+          )}
         </TabsContent>
 
         <TabsContent value="field-revised" className="space-y-6">

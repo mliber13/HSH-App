@@ -230,7 +230,7 @@ const PayrollReports = ({ employees }) => {
     // Add header
     doc.setFontSize(20);
     doc.setTextColor(207, 83, 62); // brandPrimary color
-    doc.text("HSH Drywall Management", pageWidth / 2, 20, { align: "center" });
+    doc.text("HSH Contractor Management", pageWidth / 2, 20, { align: "center" });
     
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);

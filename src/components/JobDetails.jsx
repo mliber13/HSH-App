@@ -11,9 +11,6 @@ import { toast } from '@/components/ui/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import EditTakeoffEntryModal from '@/components/EditTakeoffEntryModal';
 import PhaseMaterialsModal from '@/components/PhaseMaterialsModal';
-import ChecklistManager from '@/components/ChecklistManager';
-import CreateChecklistForm from '@/components/CreateChecklistForm';
-import ChecklistTemplates from '@/components/ChecklistTemplates';
 import JobDocuments from '@/components/JobDocuments';
 import DailyLog from '@/components/DailyLog';
 import MessagesSection from '@/components/MessagesSection';
@@ -36,14 +33,6 @@ const JobDetails = ({
   onShowTakeoffReport, 
   onShowFinancials, 
   onDeleteJob,
-  // Checklist props
-  onCreateChecklist,
-  onUpdateChecklist,
-  onDeleteChecklist,
-  onCompleteChecklist,
-  onSaveChecklistTemplate,
-  onGetChecklistTemplates,
-  onDeleteChecklistTemplate,
   employees,
   onGoToScheduleForJob,
   // Document props
@@ -61,7 +50,6 @@ const JobDetails = ({
   const [editingEntry, setEditingEntry] = useState(null);
   const [editingPhaseMaterials, setEditingPhaseMaterials] = useState(null);
   const [isEditingJobInfo, setIsEditingJobInfo] = useState(false);
-  const [checklistView, setChecklistView] = useState('checklists'); // 'checklists', 'create', 'templates'
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'takeoff', 'checklists', 'documents'
   const [initializingQuickBooks, setInitializingQuickBooks] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -124,6 +112,12 @@ const JobDetails = ({
     if (!editFormData.generalContractor) return superintendents;
     const selectedGC = generalContractors.find(gc => gc.name === editFormData.generalContractor);
     if (!selectedGC) return superintendents;
+    
+    // For in-house GC, show all superintendents
+    if (selectedGC.id === 'in-house') {
+      return superintendents;
+    }
+    
     return superintendents.filter(s => s.gcId === selectedGC.id);
   };
 
@@ -131,13 +125,31 @@ const JobDetails = ({
     if (!editFormData.generalContractor) return projectManagers;
     const selectedGC = generalContractors.find(gc => gc.name === editFormData.generalContractor);
     if (!selectedGC) return projectManagers;
+    
+    // For in-house GC, show all project managers
+    if (selectedGC.id === 'in-house') {
+      return projectManagers;
+    }
+    
     return projectManagers.filter(pm => pm.gcId === selectedGC.id);
   };
   
   const hasDefaultScopes = () => {
-    const defaultScopeNames = ['Hang', 'Finish'];
-    const existingScopeNames = scopes.map(s => s.name);
-    return defaultScopeNames.every(name => existingScopeNames.includes(name));
+    // Check for different default scopes based on job type
+    if (jobType === 'residential-construction') {
+      const constructionScopeNames = [
+        'Site Preparation', 'Foundation', 'Framing', 'Roofing', 'Plumbing Rough-In',
+        'Electrical Rough-In', 'HVAC Installation', 'Insulation', 'Drywall',
+        'Flooring', 'Cabinetry', 'Painting', 'Final Inspections', 'Cleanup'
+      ];
+      const existingScopeNames = scopes.map(s => s.name);
+      return constructionScopeNames.every(name => existingScopeNames.includes(name));
+    } else {
+      // For residential and commercial jobs, check for Hang and Finish
+      const defaultScopeNames = ['Hang', 'Finish'];
+      const existingScopeNames = scopes.map(s => s.name);
+      return defaultScopeNames.every(name => existingScopeNames.includes(name));
+    }
   };
 
   const getStatusColor = (status) => {
@@ -480,10 +492,14 @@ const JobDetails = ({
                       <span>{statusDisplay.text}</span>
                     </span>
                     <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium ${
-                      jobType === 'residential' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                      jobType === 'residential' ? 'bg-green-100 text-green-800' 
+                      : jobType === 'residential-construction' ? 'bg-orange-100 text-orange-800'
+                      : 'bg-blue-100 text-blue-800'
                     }`}>
-                      {jobType === 'residential' ? <Home className="h-4 w-4" /> : <Building className="h-4 w-4" />}
-                      <span className="capitalize">{jobType}</span>
+                      {jobType === 'residential' || jobType === 'residential-construction' ? <Home className="h-4 w-4" /> : <Building className="h-4 w-4" />}
+                      <span className="capitalize">
+                        {jobType === 'residential-construction' ? 'Residential Construction' : jobType}
+                      </span>
                     </span>
                     {/* QuickBooks Status Badge */}
                     {quickbooksIntegrationService.isJobSynced(job) && (
@@ -637,15 +653,34 @@ const JobDetails = ({
                       {generalContractors.map((gc) => (
                         <SelectItem key={gc.id} value={gc.name}>
                           <div className="flex items-center space-x-2">
-                            <Building2 className="h-4 w-4" />
-                            <span>{gc.name}</span>
+                            {gc.isInHouse ? (
+                              <Building2 className="h-4 w-4 text-yellow-600" />
+                            ) : (
+                              <Building2 className="h-4 w-4" />
+                            )}
+                            <span className={gc.isInHouse ? "font-semibold text-yellow-600" : ""}>{gc.name}</span>
+                            {gc.isInHouse && (
+                              <span className="text-xs text-yellow-600 font-medium">(You are the GC)</span>
+                            )}
                           </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 ) : (
-                  <p className="font-semibold">{job?.generalContractor}</p>
+                  <div className="flex items-center space-x-2">
+                    {job?.generalContractor === 'In-House (HSH Contractor)' ? (
+                      <Building2 className="h-4 w-4 text-yellow-400" />
+                    ) : (
+                      <Building2 className="h-4 w-4 text-white/70" />
+                    )}
+                    <p className={`font-semibold ${job?.generalContractor === 'In-House (HSH Contractor)' ? 'text-yellow-400' : ''}`}>
+                      {job?.generalContractor}
+                    </p>
+                    {job?.generalContractor === 'In-House (HSH Contractor)' && (
+                      <span className="text-xs text-yellow-400 font-medium">(You are the GC)</span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -750,7 +785,21 @@ const JobDetails = ({
               <div className="flex items-center space-x-2">
                 {!hasDefaultScopes() && (
                   <Button
-                    onClick={onAddDefaultScopes}
+                    onClick={() => {
+                      console.log('=== Add Defaults button clicked ===');
+                      console.log('Job ID:', job.id);
+                      console.log('Job type:', jobType);
+                      console.log('Current scopes:', scopes.map(s => s.name));
+                      console.log('onAddDefaultScopes function:', onAddDefaultScopes);
+                      console.log('typeof onAddDefaultScopes:', typeof onAddDefaultScopes);
+                      if (onAddDefaultScopes) {
+                        console.log('Calling onAddDefaultScopes with jobId:', job.id);
+                        onAddDefaultScopes(job.id);
+                        console.log('onAddDefaultScopes call completed');
+                      } else {
+                        console.error('onAddDefaultScopes function is not defined!');
+                      }
+                    }}
                     className="bg-gradient-to-r from-brandPrimary to-brandSecondary hover:from-brandPrimary-600 hover:to-brandSecondary-600 text-white font-semibold"
                     size="sm"
                   >
@@ -1053,96 +1102,6 @@ const JobDetails = ({
         </motion.div>
       )}
 
-      {/* Checklists Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <Card className="shadow-lg">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl font-bold text-gray-900">Checklists</CardTitle>
-              <div className="flex items-center space-x-2">
-                <Button
-                  onClick={() => setChecklistView('checklists')}
-                  variant={checklistView === 'checklists' ? 'default' : 'outline'}
-                  size="sm"
-                >
-                  <ClipboardList className="h-4 w-4 mr-2" />
-                  Checklists
-                </Button>
-                <Button
-                  onClick={() => setChecklistView('templates')}
-                  variant={checklistView === 'templates' ? 'default' : 'outline'}
-                  size="sm"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Templates
-                </Button>
-                <Button
-                  onClick={() => setChecklistView('create')}
-                  className="bg-gradient-to-r from-brandPrimary to-brandSecondary hover:from-brandPrimary-600 hover:to-brandSecondary-600 text-white"
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Checklist
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {checklistView === 'checklists' && (
-              <ChecklistManager
-                jobId={job.id}
-                checklists={job.checklists || []}
-                employees={employees || []}
-                onCreateChecklist={() => setChecklistView('create')}
-                onUpdateChecklist={(jobId, checklistId, updatedChecklist) => 
-                  onUpdateChecklist(jobId, checklistId, updatedChecklist)
-                }
-                onDeleteChecklist={(jobId, checklistId) => 
-                  onDeleteChecklist(jobId, checklistId)
-                }
-                onCompleteChecklist={(jobId, checklistId) => 
-                  onCompleteChecklist(jobId, checklistId)
-                }
-                onSaveChecklistTemplate={(templateData) => {
-                  onSaveChecklistTemplate(templateData);
-                }}
-                noCard={true}
-              />
-            )}
-            
-            {checklistView === 'create' && (
-              <CreateChecklistForm
-                jobId={job.id}
-                employees={employees || []}
-                onSubmit={(jobId, checklistData) => {
-                  onCreateChecklist(jobId, checklistData, () => setChecklistView('checklists'));
-                }}
-                onCancel={() => setChecklistView('checklists')}
-                onSaveAsTemplate={(templateData) => {
-                  onSaveChecklistTemplate(templateData, () => setChecklistView('checklists'));
-                }}
-              />
-            )}
-            
-            {checklistView === 'templates' && (
-              <ChecklistTemplates
-                templates={onGetChecklistTemplates()}
-                employees={employees || []}
-                onUseTemplate={(template) => {
-                  onCreateChecklist(job.id, template, () => setChecklistView('checklists'));
-                }}
-                onDeleteTemplate={(templateId) => {
-                  onDeleteChecklistTemplate(templateId);
-                }}
-              />
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
 
       {/* Documents Section */}
       <motion.div

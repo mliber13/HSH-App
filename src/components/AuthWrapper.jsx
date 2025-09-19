@@ -122,7 +122,7 @@ const AuthWrapper = ({ children }) => {
               <div className="flex items-center space-x-3">
                 <Building2 className="h-8 w-8" />
                 <div>
-                  <CardTitle className="text-2xl font-bold">HSH Drywall</CardTitle>
+                  <CardTitle className="text-2xl font-bold">HSH Contractor</CardTitle>
                   <p className="text-white/80 text-sm">Management System</p>
                 </div>
               </div>

@@ -15,6 +15,7 @@ const AddEmployeeForm = ({ onSubmit, onCancel }) => {
     email: '',
     phone: '',
     employeeType: '',
+    crewType: '',
     role: '',
     payType: 'hourly',
     hourlyRate: '',
@@ -217,25 +218,51 @@ const AddEmployeeForm = ({ onSubmit, onCancel }) => {
 
                   <div className="space-y-1">
                     <Label className="text-sm font-semibold text-gray-700">
-                      Role *
+                      Crew Type
                     </Label>
                     <Select
-                      value={formData.role}
-                      onValueChange={(value) => handleChange('role', value)}
+                      value={formData.crewType}
+                      onValueChange={(value) => handleChange('crewType', value)}
                     >
                       <SelectTrigger className="border-2 focus:border-brandPrimary">
-                        <SelectValue placeholder="Select role" />
+                        <SelectValue placeholder="Select crew" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Admin">Admin</SelectItem>
-                        <SelectItem value="Project Manager">Project Manager</SelectItem>
-                        <SelectItem value="Foreman">Foreman</SelectItem>
-                        <SelectItem value="Hanger">Hanger</SelectItem>
-                        <SelectItem value="Finisher">Finisher</SelectItem>
-                        <SelectItem value="Laborer">Laborer</SelectItem>
+                        <SelectItem value="Drywall Crew">Drywall Crew</SelectItem>
+                        <SelectItem value="Framing Crew">Framing Crew</SelectItem>
+                        <SelectItem value="Finishing Crew">Finishing Crew</SelectItem>
+                        <SelectItem value="General Labor">General Labor</SelectItem>
+                        <SelectItem value="Management">Management</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-sm font-semibold text-gray-700">
+                    Role *
+                  </Label>
+                  <Select
+                    value={formData.role}
+                    onValueChange={(value) => handleChange('role', value)}
+                  >
+                    <SelectTrigger className="border-2 focus:border-brandPrimary">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Admin">Admin</SelectItem>
+                      <SelectItem value="Project Manager">Project Manager</SelectItem>
+                      <SelectItem value="Superintendent">Superintendent</SelectItem>
+                      <SelectItem value="Foreman">Foreman</SelectItem>
+                      <SelectItem value="Lead Carpenter">Lead Carpenter</SelectItem>
+                      <SelectItem value="Carpenter">Carpenter</SelectItem>
+                      <SelectItem value="Framer">Framer</SelectItem>
+                      <SelectItem value="Hanger">Hanger</SelectItem>
+                      <SelectItem value="Finisher">Finisher</SelectItem>
+                      <SelectItem value="Laborer">Laborer</SelectItem>
+                      <SelectItem value="Apprentice">Apprentice</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

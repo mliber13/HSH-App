@@ -74,11 +74,42 @@ export const createGeneralContractor = (gcData) => {
 
 export const getGeneralContractors = () => {
   const data = initializeDefaultData();
-  return data.generalContractors;
+  
+  // Always include "In-House" as the first option for when HSH Contractor is the GC
+  const inHouseGC = {
+    id: 'in-house',
+    name: 'In-House (HSH Contractor)',
+    company: 'HSH Contractor',
+    email: '',
+    phone: '',
+    address: '',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    isInHouse: true
+  };
+  
+  // Return in-house option first, then all other GCs
+  return [inHouseGC, ...data.generalContractors];
 };
 
 export const getGeneralContractorById = (gcId) => {
   const data = initializeDefaultData();
+  
+  // Handle in-house GC
+  if (gcId === 'in-house') {
+    return {
+      id: 'in-house',
+      name: 'In-House (HSH Contractor)',
+      company: 'HSH Contractor',
+      email: '',
+      phone: '',
+      address: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isInHouse: true
+    };
+  }
+  
   return data.generalContractors.find(gc => gc.id === gcId);
 };
 
