@@ -470,6 +470,7 @@ function AppContent({ onLogout }) {
           <CreateJobForm 
             onSubmit={(data) => createJob(data, handleJobCreated)}
             onCancel={() => setCurrentJobView('jobs')}
+            existingJobs={jobs}
           />
         );
       
@@ -589,6 +590,7 @@ function AppContent({ onLogout }) {
           jobId={selectedJob.id}
           onSubmit={(jobId, data) => createScope(jobId, data, handleScopeCreated)}
           onCancel={() => setIsCreateScopeModalOpen(false)}
+          existingScopes={selectedJob.scopes || []}
         />
       )}
       

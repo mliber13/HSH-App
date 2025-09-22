@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Building2, Save, X, Home, Building, MapPin, Navigation, CheckCircle, Users, Plus } from 'lucide-react';
+import { Building2, Save, X, Home, Building, MapPin, Navigation, CheckCircle, Users, Plus, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/use-toast';
 import locationService from '@/services/locationService';
 import { getGeneralContractors, getSuperintendents, getProjectManagers } from '@/services/clientPortalService';
+import { validateForm, validateField, jobValidationRules, checkDuplicateJobName, sanitizeInput } from '@/lib/validation';
 
-const CreateJobForm = ({ onSubmit, onCancel }) => {
+const CreateJobForm = ({ onSubmit, onCancel, existingJobs = [] }) => {
   const [formData, setFormData] = useState({
     jobName: '',
     jobType: '', // New field for job type
@@ -23,6 +24,8 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
     geofenceRadius: locationService.getGeofenceRadius()
   });
 
+  const [validationErrors, setValidationErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [generalContractors, setGeneralContractors] = useState([]);
   const [superintendents, setSuperintendents] = useState([]);
@@ -38,67 +41,106 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
     setProjectManagers(existingPMs);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.jobName.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter a job name.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    setValidationErrors({});
 
-    if (!formData.jobType) {
-      toast({
-        title: "Missing Information",
-        description: "Please select a job type (Residential Drywall, Residential Construction, or Commercial).",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!formData.generalContractorId) {
-      toast({
-        title: "Missing Information", 
-        description: "Please select a General Contractor.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!formData.address.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter the job site address.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Get the names from the selected IDs for the job data
-    const selectedGC = generalContractors.find(gc => gc.id === formData.generalContractorId);
-    const selectedSuper = formData.superintendentId ? superintendents.find(s => s.id === formData.superintendentId) : null;
-    const selectedPM = formData.projectManagerId ? projectManagers.find(pm => pm.id === formData.projectManagerId) : null;
-
-    const jobData = {
+    // Sanitize form data
+    const sanitizedData = {
       ...formData,
-      generalContractor: selectedGC ? selectedGC.name : '',
-      superintendent: selectedSuper ? selectedSuper.name : '',
-      projectManager: selectedPM ? selectedPM.name : ''
+      jobName: sanitizeInput(formData.jobName),
+      address: sanitizeInput(formData.address),
+      lockboxCode: sanitizeInput(formData.lockboxCode)
     };
 
-    console.log('=== CreateJobForm submitting ===');
-    console.log('Form data:', formData);
-    console.log('Job data being submitted:', jobData);
-    console.log('Job type:', jobData.jobType);
+    // Validate form
+    const { isValid, errors } = validateForm(sanitizedData, jobValidationRules);
+    
+    if (!isValid) {
+      setValidationErrors(errors);
+      setIsSubmitting(false);
+      
+      // Show first error in toast
+      const firstError = Object.values(errors)[0]?.[0];
+      if (firstError) {
+        toast({
+          title: "Validation Error",
+          description: firstError,
+          variant: "destructive"
+        });
+      }
+      return;
+    }
 
-    onSubmit(jobData);
+    // Check for duplicate job name
+    if (checkDuplicateJobName(sanitizedData.jobName, existingJobs)) {
+      setValidationErrors({
+        jobName: ['A job with this name already exists. Please choose a different name.']
+      });
+      setIsSubmitting(false);
+      
+      toast({
+        title: "Duplicate Job Name",
+        description: "A job with this name already exists. Please choose a different name.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Get the names from the selected IDs for the job data
+      const selectedGC = generalContractors.find(gc => gc.id === sanitizedData.generalContractorId);
+      const selectedSuper = sanitizedData.superintendentId ? superintendents.find(s => s.id === sanitizedData.superintendentId) : null;
+      const selectedPM = sanitizedData.projectManagerId ? projectManagers.find(pm => pm.id === sanitizedData.projectManagerId) : null;
+
+      const jobData = {
+        ...sanitizedData,
+        generalContractor: selectedGC ? selectedGC.name : '',
+        superintendent: selectedSuper ? selectedSuper.name : '',
+        projectManager: selectedPM ? selectedPM.name : ''
+      };
+
+      console.log('=== CreateJobForm submitting ===');
+      console.log('Form data:', sanitizedData);
+      console.log('Job data being submitted:', jobData);
+      console.log('Job type:', jobData.jobType);
+
+      await onSubmit(jobData);
+    } catch (error) {
+      console.error('Error creating job:', error);
+      toast({
+        title: "Error Creating Job",
+        description: "An error occurred while creating the job. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
+  // Real-time validation for specific fields
+  const validateFieldOnBlur = (field, value) => {
+    const errors = validateField(value, jobValidationRules[field]);
+    if (errors.length > 0) {
+      setValidationErrors(prev => ({ ...prev, [field]: errors }));
+    }
   };
 
   const handleAddressChange = (address) => {
@@ -164,9 +206,18 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
                   id="jobName"
                   value={formData.jobName}
                   onChange={(e) => handleChange('jobName', e.target.value)}
+                  onBlur={(e) => validateFieldOnBlur('jobName', e.target.value)}
                   placeholder="Enter job name"
-                  className="border-2 focus:border-brandPrimary transition-colors"
+                  className={`border-2 focus:border-brandPrimary transition-colors ${
+                    validationErrors.jobName ? 'border-red-500 focus:border-red-500' : ''
+                  }`}
                 />
+                {validationErrors.jobName && (
+                  <div className="flex items-center space-x-1 text-red-600 text-sm">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{validationErrors.jobName[0]}</span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -177,7 +228,9 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
                   value={formData.jobType}
                   onValueChange={(value) => handleChange('jobType', value)}
                 >
-                  <SelectTrigger className="border-2 focus:border-brandPrimary">
+                  <SelectTrigger className={`border-2 focus:border-brandPrimary ${
+                    validationErrors.jobType ? 'border-red-500 focus:border-red-500' : ''
+                  }`}>
                     <SelectValue placeholder="Select job type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -201,6 +254,12 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
                     </SelectItem>
                   </SelectContent>
                 </Select>
+                {validationErrors.jobType && (
+                  <div className="flex items-center space-x-1 text-red-600 text-sm">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>{validationErrors.jobType[0]}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -225,7 +284,9 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
                       handleChange('projectManagerId', '');
                     }}
                   >
-                    <SelectTrigger className="border-2 focus:border-brandPrimary">
+                    <SelectTrigger className={`border-2 focus:border-brandPrimary ${
+                      validationErrors.generalContractorId ? 'border-red-500 focus:border-red-500' : ''
+                    }`}>
                       <SelectValue placeholder="Select General Contractor" />
                     </SelectTrigger>
                     <SelectContent>
@@ -249,6 +310,12 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {validationErrors.generalContractorId && (
+                    <div className="flex items-center space-x-1 text-red-600 text-sm">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{validationErrors.generalContractorId[0]}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -352,9 +419,18 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
                 id="address"
                 value={formData.address}
                 onChange={(e) => handleAddressChange(e.target.value)}
+                onBlur={(e) => validateFieldOnBlur('address', e.target.value)}
                 placeholder="Enter job site address"
-                className="border-2 focus:border-brandPrimary transition-colors"
+                className={`border-2 focus:border-brandPrimary transition-colors ${
+                  validationErrors.address ? 'border-red-500 focus:border-red-500' : ''
+                }`}
               />
+              {validationErrors.address && (
+                <div className="flex items-center space-x-1 text-red-600 text-sm">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>{validationErrors.address[0]}</span>
+                </div>
+              )}
             </div>
 
             {/* Location Settings */}
@@ -439,10 +515,11 @@ const CreateJobForm = ({ onSubmit, onCancel }) => {
             <div className="flex space-x-4 pt-6">
               <Button
                 type="submit"
-                className="flex-1 bg-gradient-to-r from-brandPrimary to-brandSecondary hover:from-brandPrimary-600 hover:to-brandSecondary-600 text-white font-semibold py-3"
+                disabled={isSubmitting}
+                className="flex-1 bg-gradient-to-r from-brandPrimary to-brandSecondary hover:from-brandPrimary-600 hover:to-brandSecondary-600 text-white font-semibold py-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="h-4 w-4 mr-2" />
-                Create Job
+                {isSubmitting ? 'Creating Job...' : 'Create Job'}
               </Button>
               
               <Button
