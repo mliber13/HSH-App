@@ -12,6 +12,15 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [activeTrade, setActiveTrade] = useState('sitework');
 
+  // Add error boundary protection
+  if (!job) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-gray-500">No job data available</p>
+      </div>
+    );
+  }
+
   // Available unit types
   const unitTypes = [
     { value: 'sqft', label: 'Square Feet (sqft)' },
@@ -104,13 +113,16 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
 
   // Initialize financial data structure
   const initializeFinancials = () => {
-    if (!job?.financials?.residentialConstruction) {
+    try {
+      if (!job?.financials?.residentialConstruction) {
       const residentialConstructionFinancials = {
         phases: {
           sitework: { items: {}, total: 0 },
           structure: { items: {}, total: 0 },
           systems: { items: {}, total: 0 },
-          finishes: { items: {}, total: 0 }
+          drywall: { items: {}, total: 0 },
+          finishes: { items: {}, total: 0 },
+          management: { items: {}, total: 0 }
         },
         overhead: {
           percentage: 15,
@@ -166,8 +178,27 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       });
 
       return residentialConstructionFinancials;
+      }
+      return job.financials.residentialConstruction;
+    } catch (error) {
+      console.error('Error initializing financials:', error);
+      // Return a basic structure if there's an error
+      return {
+        phases: {
+          sitework: { items: {}, total: 0 },
+          structure: { items: {}, total: 0 },
+          systems: { items: {}, total: 0 },
+          drywall: { items: {}, total: 0 },
+          finishes: { items: {}, total: 0 },
+          management: { items: {}, total: 0 }
+        },
+        overhead: { percentage: 15, amount: 0 },
+        profit: { percentage: 20, amount: 0 },
+        salesTax: { percentage: 7.25, amount: 0 },
+        totalEstimate: 0,
+        manualOverride: 0
+      };
     }
-    return job.financials.residentialConstruction;
   };
 
   const [financials, setFinancials] = useState(initializeFinancials());
