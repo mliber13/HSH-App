@@ -900,39 +900,129 @@ export function useJobs() {
           phases: {
             sitework: { 
               items: {
-                excavation: { quantity: 0, unit: 'sqft', rate: 2.50, waste: 5, total: 0 },
-                foundation: { quantity: 0, unit: 'sqft', rate: 15.00, waste: 5, total: 0 },
-                utilities: { quantity: 0, unit: 'each', rate: 5000.00, waste: 0, total: 0 },
-                landscaping: { quantity: 0, unit: 'sqft', rate: 3.00, waste: 10, total: 0 }
+                excavation: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                foundation: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                utilities: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'each', ratePerUnit: 0, waste: 0, total: 0 },
+                  material: { quantity: 0, unit: 'each', ratePerUnit: 0, waste: 0, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                landscaping: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                }
               }, 
               total: 0 
             },
             structure: { 
               items: {
-                framing: { quantity: 0, unit: 'sqft', rate: 8.00, waste: 5, total: 0 },
-                roofing: { quantity: 0, unit: 'sqft', rate: 4.50, waste: 10, total: 0 },
-                siding: { quantity: 0, unit: 'sqft', rate: 6.00, waste: 5, total: 0 },
-                windows: { quantity: 0, unit: 'each', rate: 800.00, waste: 0, total: 0 }
+                framing: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                roofing: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                siding: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                windows: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'each', ratePerUnit: 0, waste: 0, total: 0 },
+                  material: { quantity: 0, unit: 'each', ratePerUnit: 0, waste: 0, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                }
               }, 
               total: 0 
             },
             systems: { 
               items: {
-                electrical: { quantity: 0, unit: 'sqft', rate: 3.50, waste: 5, total: 0 },
-                plumbing: { quantity: 0, unit: 'sqft', rate: 4.00, waste: 5, total: 0 },
-                hvac: { quantity: 0, unit: 'sqft', rate: 5.00, waste: 5, total: 0 },
-                insulation: { quantity: 0, unit: 'sqft', rate: 1.50, waste: 10, total: 0 }
+                electrical: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                plumbing: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                hvac: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                insulation: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                }
               }, 
               total: 0 
             },
             finishes: { 
               items: {
-                drywall: { quantity: 0, unit: 'sqft', rate: 2.00, waste: 5, total: 0 },
-                flooring: { quantity: 0, unit: 'sqft', rate: 4.00, waste: 10, total: 0 },
-                cabinets: { quantity: 0, unit: 'linear ft', rate: 200.00, waste: 0, total: 0 },
-                countertops: { quantity: 0, unit: 'sqft', rate: 50.00, waste: 10, total: 0 },
-                paint: { quantity: 0, unit: 'sqft', rate: 1.50, waste: 5, total: 0 },
-                trim: { quantity: 0, unit: 'linear ft', rate: 8.00, waste: 10, total: 0 }
+                drywall: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                flooring: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                cabinets: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'linear ft', ratePerUnit: 0, waste: 0, total: 0 },
+                  material: { quantity: 0, unit: 'linear ft', ratePerUnit: 0, waste: 0, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                countertops: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                paint: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                trim: { 
+                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'linear ft', ratePerUnit: 0, waste: 10, total: 0 },
+                  material: { quantity: 0, unit: 'linear ft', ratePerUnit: 0, waste: 10, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                }
               }, 
               total: 0 
             }

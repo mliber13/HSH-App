@@ -12,6 +12,24 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [activeTrade, setActiveTrade] = useState('sitework');
 
+  // Available unit types
+  const unitTypes = [
+    { value: 'sqft', label: 'Square Feet (sqft)' },
+    { value: 'linear ft', label: 'Linear Feet (LF)' },
+    { value: 'each', label: 'Each (EA)' },
+    { value: 'hours', label: 'Hours (HR)' },
+    { value: 'sheets', label: 'Sheets' },
+    { value: 'studs', label: 'Studs' },
+    { value: 'batts', label: 'Batts' },
+    { value: 'panels', label: 'Panels' },
+    { value: 'grids', label: 'Grids' },
+    { value: 'sticks', label: 'Sticks' },
+    { value: 'lbs', label: 'Pounds (LBS)' },
+    { value: 'tons', label: 'Tons' },
+    { value: 'yards', label: 'Cubic Yards (CY)' },
+    { value: 'gallons', label: 'Gallons (GAL)' }
+  ];
+
   // Trade categories for residential construction
   const tradeCategories = {
     sitework: {
@@ -21,10 +39,10 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       bgColor: 'bg-orange-50',
       borderColor: 'border-orange-200',
       items: [
-        { key: 'excavation', label: 'Excavation & Grading', unit: 'sqft', defaultRate: 2.50 },
-        { key: 'foundation', label: 'Foundation Work', unit: 'sqft', defaultRate: 15.00 },
-        { key: 'utilities', label: 'Utility Connections', unit: 'each', defaultRate: 5000.00 },
-        { key: 'landscaping', label: 'Landscaping', unit: 'sqft', defaultRate: 3.00 }
+        { key: 'excavation', label: 'Excavation & Grading', defaultUnit: 'sqft' },
+        { key: 'foundation', label: 'Foundation Work', defaultUnit: 'sqft' },
+        { key: 'utilities', label: 'Utility Connections', defaultUnit: 'each' },
+        { key: 'landscaping', label: 'Landscaping', defaultUnit: 'sqft' }
       ]
     },
     structure: {
@@ -34,10 +52,10 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       bgColor: 'bg-blue-50',
       borderColor: 'border-blue-200',
       items: [
-        { key: 'framing', label: 'Framing', unit: 'sqft', defaultRate: 8.00 },
-        { key: 'roofing', label: 'Roofing', unit: 'sqft', defaultRate: 4.50 },
-        { key: 'siding', label: 'Siding', unit: 'sqft', defaultRate: 6.00 },
-        { key: 'windows', label: 'Windows & Doors', unit: 'each', defaultRate: 800.00 }
+        { key: 'framing', label: 'Framing', defaultUnit: 'sqft' },
+        { key: 'roofing', label: 'Roofing', defaultUnit: 'sqft' },
+        { key: 'siding', label: 'Siding', defaultUnit: 'sqft' },
+        { key: 'windows', label: 'Windows & Doors', defaultUnit: 'each' }
       ]
     },
     systems: {
@@ -47,10 +65,10 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       bgColor: 'bg-green-50',
       borderColor: 'border-green-200',
       items: [
-        { key: 'electrical', label: 'Electrical', unit: 'sqft', defaultRate: 3.50 },
-        { key: 'plumbing', label: 'Plumbing', unit: 'sqft', defaultRate: 4.00 },
-        { key: 'hvac', label: 'HVAC', unit: 'sqft', defaultRate: 5.00 },
-        { key: 'insulation', label: 'Insulation', unit: 'sqft', defaultRate: 1.50 }
+        { key: 'electrical', label: 'Electrical', defaultUnit: 'sqft' },
+        { key: 'plumbing', label: 'Plumbing', defaultUnit: 'sqft' },
+        { key: 'hvac', label: 'HVAC', defaultUnit: 'sqft' },
+        { key: 'insulation', label: 'Insulation', defaultUnit: 'sqft' }
       ]
     },
     finishes: {
@@ -60,12 +78,12 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       bgColor: 'bg-purple-50',
       borderColor: 'border-purple-200',
       items: [
-        { key: 'drywall', label: 'Drywall', unit: 'sqft', defaultRate: 2.00 },
-        { key: 'flooring', label: 'Flooring', unit: 'sqft', defaultRate: 4.00 },
-        { key: 'cabinets', label: 'Cabinets', unit: 'linear ft', defaultRate: 200.00 },
-        { key: 'countertops', label: 'Countertops', unit: 'sqft', defaultRate: 50.00 },
-        { key: 'paint', label: 'Painting', unit: 'sqft', defaultRate: 1.50 },
-        { key: 'trim', label: 'Trim Work', unit: 'linear ft', defaultRate: 8.00 }
+        { key: 'drywall', label: 'Drywall', defaultUnit: 'sqft' },
+        { key: 'flooring', label: 'Flooring', defaultUnit: 'sqft' },
+        { key: 'cabinets', label: 'Cabinets', defaultUnit: 'linear ft' },
+        { key: 'countertops', label: 'Countertops', defaultUnit: 'sqft' },
+        { key: 'paint', label: 'Painting', defaultUnit: 'sqft' },
+        { key: 'trim', label: 'Trim Work', defaultUnit: 'linear ft' }
       ]
     }
   };
@@ -96,15 +114,39 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
         manualOverride: 0
       };
 
-      // Initialize all trade items with default values
+      // Initialize all trade items with detailed structure
       Object.keys(tradeCategories).forEach(phase => {
         tradeCategories[phase].items.forEach(item => {
           residentialConstructionFinancials.phases[phase].items[item.key] = {
-            quantity: 0,
-            unit: item.unit,
-            rate: item.defaultRate,
-            waste: 5, // 5% default waste
-            total: 0
+            // Who is doing the work
+            contractor: {
+              type: 'subcontractor', // 'subcontractor', 'employee', 'in-house'
+              name: '',
+              contact: '',
+              quoteReceived: false,
+              quoteDate: null,
+              quoteAmount: 0
+            },
+            // Labor breakdown
+            labor: {
+              quantity: 0,
+              unit: item.defaultUnit,
+              ratePerUnit: 0,
+              waste: 5, // 5% default waste
+              total: 0
+            },
+            // Material breakdown
+            material: {
+              quantity: 0,
+              unit: item.defaultUnit,
+              ratePerUnit: 0,
+              waste: 5, // 5% default waste
+              total: 0
+            },
+            // Combined totals
+            subtotal: 0,
+            total: 0,
+            notes: ''
           };
         });
       });
@@ -125,8 +167,25 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       let phaseTotal = 0;
       Object.keys(updatedFinancials.phases[phase].items).forEach(itemKey => {
         const item = updatedFinancials.phases[phase].items[itemKey];
-        const adjustedQuantity = item.quantity * (1 + item.waste / 100);
-        item.total = adjustedQuantity * item.rate;
+        
+        // Calculate labor total
+        const laborAdjustedQty = item.labor.quantity * (1 + item.labor.waste / 100);
+        item.labor.total = laborAdjustedQty * item.labor.ratePerUnit;
+        
+        // Calculate material total
+        const materialAdjustedQty = item.material.quantity * (1 + item.material.waste / 100);
+        item.material.total = materialAdjustedQty * item.material.ratePerUnit;
+        
+        // Calculate item subtotal and total
+        item.subtotal = item.labor.total + item.material.total;
+        
+        // If contractor quote is received, use that amount, otherwise use calculated total
+        if (item.contractor.quoteReceived && item.contractor.quoteAmount > 0) {
+          item.total = item.contractor.quoteAmount;
+        } else {
+          item.total = item.subtotal;
+        }
+        
         phaseTotal += item.total;
       });
       updatedFinancials.phases[phase].total = phaseTotal;
@@ -162,10 +221,21 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
     }
   };
 
-  // Handle input changes
-  const handleInputChange = (phase, itemKey, field, value) => {
+  // Handle input changes for nested fields
+  const handleInputChange = (phase, itemKey, category, field, value) => {
     const updatedFinancials = { ...financials };
-    updatedFinancials.phases[phase].items[itemKey][field] = parseFloat(value) || 0;
+    if (category) {
+      updatedFinancials.phases[phase].items[itemKey][category][field] = parseFloat(value) || 0;
+    } else {
+      updatedFinancials.phases[phase].items[itemKey][field] = value;
+    }
+    setFinancials(updatedFinancials);
+    updateCalculations();
+  };
+
+  const handleContractorChange = (phase, itemKey, field, value) => {
+    const updatedFinancials = { ...financials };
+    updatedFinancials.phases[phase].items[itemKey].contractor[field] = value;
     setFinancials(updatedFinancials);
     updateCalculations();
   };
@@ -192,40 +262,249 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
     }
   };
 
-  // Render trade item input
+  // Render trade item input with detailed breakdown
   const renderTradeItem = (phase, item) => {
     const itemData = financials.phases[phase].items[item.key];
     if (!itemData) return null;
 
     return (
-      <div key={item.key} className="grid grid-cols-5 gap-4 items-center py-3 border-b border-gray-100">
-        <div className="col-span-2">
-          <Label className="text-sm font-medium text-gray-700">{item.label}</Label>
+      <div key={item.key} className="border border-gray-200 rounded-lg p-4 mb-4 bg-white">
+        {/* Item Header */}
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-lg font-semibold text-gray-800">{item.label}</h4>
+          <div className="text-right">
+            <div className="text-sm text-gray-500">Total</div>
+            <div className="text-xl font-bold text-brandSecondary">
+              ${itemData.total.toFixed(2)}
+            </div>
+          </div>
         </div>
-        <div>
+
+        {/* Contractor Information */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-gray-50 rounded">
+          <div>
+            <Label className="text-sm font-medium text-gray-700">Contractor Type</Label>
+            <Select
+              value={itemData.contractor.type}
+              onValueChange={(value) => handleContractorChange(phase, item.key, 'type', value)}
+            >
+              <SelectTrigger className="h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="subcontractor">Subcontractor</SelectItem>
+                <SelectItem value="employee">Employee</SelectItem>
+                <SelectItem value="in-house">In-House</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-sm font-medium text-gray-700">Name/Company</Label>
+            <Input
+              value={itemData.contractor.name}
+              onChange={(e) => handleContractorChange(phase, item.key, 'name', e.target.value)}
+              placeholder="Enter name or company"
+              className="h-8"
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium text-gray-700">Contact</Label>
+            <Input
+              value={itemData.contractor.contact}
+              onChange={(e) => handleContractorChange(phase, item.key, 'contact', e.target.value)}
+              placeholder="Phone or email"
+              className="h-8"
+            />
+          </div>
+        </div>
+
+        {/* Quote Information */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-blue-50 rounded">
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={itemData.contractor.quoteReceived}
+              onChange={(e) => handleContractorChange(phase, item.key, 'quoteReceived', e.target.checked)}
+              className="rounded"
+            />
+            <Label className="text-sm font-medium text-gray-700">Quote Received</Label>
+          </div>
+          <div>
+            <Label className="text-sm font-medium text-gray-700">Quote Amount</Label>
+            <Input
+              type="number"
+              step="0.01"
+              value={itemData.contractor.quoteAmount}
+              onChange={(e) => handleContractorChange(phase, item.key, 'quoteAmount', e.target.value)}
+              placeholder="0.00"
+              className="h-8"
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium text-gray-700">Quote Date</Label>
+            <Input
+              type="date"
+              value={itemData.contractor.quoteDate || ''}
+              onChange={(e) => handleContractorChange(phase, item.key, 'quoteDate', e.target.value)}
+              className="h-8"
+            />
+          </div>
+        </div>
+
+        {/* Labor and Material Breakdown */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Labor Section */}
+          <div className="border border-gray-200 rounded p-3">
+            <h5 className="font-semibold text-gray-800 mb-3 flex items-center">
+              <Hammer className="h-4 w-4 mr-2 text-blue-600" />
+              Labor
+            </h5>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs text-gray-600">Quantity</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={itemData.labor.quantity}
+                    onChange={(e) => handleInputChange(phase, item.key, 'labor', 'quantity', e.target.value)}
+                    placeholder="0"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-600">Unit</Label>
+                  <Select
+                    value={itemData.labor.unit}
+                    onValueChange={(value) => handleInputChange(phase, item.key, 'labor', 'unit', value)}
+                  >
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {unitTypes.map(unit => (
+                        <SelectItem key={unit.value} value={unit.value}>
+                          {unit.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs text-gray-600">Rate per Unit</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={itemData.labor.ratePerUnit}
+                    onChange={(e) => handleInputChange(phase, item.key, 'labor', 'ratePerUnit', e.target.value)}
+                    placeholder="0.00"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-600">Waste %</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={itemData.labor.waste}
+                    onChange={(e) => handleInputChange(phase, item.key, 'labor', 'waste', e.target.value)}
+                    placeholder="5"
+                    className="h-8 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-sm text-gray-600">Labor Total: </span>
+                <span className="font-semibold text-blue-600">
+                  ${itemData.labor.total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Material Section */}
+          <div className="border border-gray-200 rounded p-3">
+            <h5 className="font-semibold text-gray-800 mb-3 flex items-center">
+              <Building className="h-4 w-4 mr-2 text-green-600" />
+              Material
+            </h5>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs text-gray-600">Quantity</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={itemData.material.quantity}
+                    onChange={(e) => handleInputChange(phase, item.key, 'material', 'quantity', e.target.value)}
+                    placeholder="0"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-600">Unit</Label>
+                  <Select
+                    value={itemData.material.unit}
+                    onValueChange={(value) => handleInputChange(phase, item.key, 'material', 'unit', value)}
+                  >
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {unitTypes.map(unit => (
+                        <SelectItem key={unit.value} value={unit.value}>
+                          {unit.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs text-gray-600">Rate per Unit</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={itemData.material.ratePerUnit}
+                    onChange={(e) => handleInputChange(phase, item.key, 'material', 'ratePerUnit', e.target.value)}
+                    placeholder="0.00"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-600">Waste %</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={itemData.material.waste}
+                    onChange={(e) => handleInputChange(phase, item.key, 'material', 'waste', e.target.value)}
+                    placeholder="5"
+                    className="h-8 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-sm text-gray-600">Material Total: </span>
+                <span className="font-semibold text-green-600">
+                  ${itemData.material.total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Notes */}
+        <div className="mt-4">
+          <Label className="text-sm font-medium text-gray-700">Notes</Label>
           <Input
-            type="number"
-            step="0.01"
-            value={itemData.quantity}
-            onChange={(e) => handleInputChange(phase, item.key, 'quantity', e.target.value)}
-            placeholder="0"
-            className="w-full h-8 text-center border-gray-200 focus:border-brandSecondary"
+            value={itemData.notes}
+            onChange={(e) => handleInputChange(phase, item.key, null, 'notes', e.target.value)}
+            placeholder="Additional notes or specifications..."
+            className="mt-1"
           />
-        </div>
-        <div>
-          <Input
-            type="number"
-            step="0.01"
-            value={itemData.rate}
-            onChange={(e) => handleInputChange(phase, item.key, 'rate', e.target.value)}
-            placeholder="0.00"
-            className="w-full h-8 text-center border-gray-200 focus:border-brandSecondary"
-          />
-        </div>
-        <div className="text-right">
-          <span className="font-semibold text-gray-800">
-            ${itemData.total.toFixed(2)}
-          </span>
         </div>
       </div>
     );
@@ -238,26 +517,22 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
     return (
       <Card key={phaseKey} className={`border-2 ${category.borderColor} ${category.bgColor}`}>
         <CardHeader className="pb-3">
-          <CardTitle className={`flex items-center ${category.color}`}>
-            <Icon className="h-5 w-5 mr-2" />
-            {category.name}
+          <CardTitle className={`flex items-center justify-between ${category.color}`}>
+            <div className="flex items-center">
+              <Icon className="h-5 w-5 mr-2" />
+              {category.name}
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-500">Phase Total</div>
+              <div className="text-xl font-bold text-brandSecondary">
+                ${financials.phases[phaseKey].total.toFixed(2)}
+              </div>
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
-          <div className="space-y-2">
-            <div className="grid grid-cols-5 gap-4 items-center py-2 border-b-2 border-gray-200 bg-gray-50 rounded">
-              <div className="col-span-2 font-semibold text-gray-700">Item</div>
-              <div className="text-center font-semibold text-gray-700">Qty</div>
-              <div className="text-center font-semibold text-gray-700">Rate ($)</div>
-              <div className="text-right font-semibold text-gray-700">Total</div>
-            </div>
+          <div className="space-y-4">
             {category.items.map(item => renderTradeItem(phaseKey, item))}
-            <div className="flex justify-between items-center py-3 border-t-2 border-gray-200 bg-gray-50 rounded mt-4">
-              <span className="font-bold text-lg text-gray-800">{category.name} Total:</span>
-              <span className="font-bold text-lg text-brandSecondary">
-                ${financials.phases[phaseKey].total.toFixed(2)}
-              </span>
-            </div>
           </div>
         </CardContent>
       </Card>
