@@ -797,6 +797,8 @@ export function useJobs() {
       jobType: jobData.jobType || 'residential', // Default to residential if not specified
       financialCategories: jobData.jobType === 'commercial' 
         ? ['drywall', 'act', 'channel', 'door', 'insulation', 'metalFraming', 'suspendedGrid', 'other'] 
+        : jobData.jobType === 'residential-construction'
+        ? ['sitework', 'structure', 'systems', 'finishes']
         : ['drywall'],
       status: 'estimating', // New jobs start in estimating phase
       scopes: [],
@@ -893,6 +895,54 @@ export function useJobs() {
             laborDescription: ''
           }
         },
+        // Residential Construction financials (for In-House GC projects)
+        residentialConstruction: jobData.jobType === 'residential-construction' ? {
+          phases: {
+            sitework: { 
+              items: {
+                excavation: { quantity: 0, unit: 'sqft', rate: 2.50, waste: 5, total: 0 },
+                foundation: { quantity: 0, unit: 'sqft', rate: 15.00, waste: 5, total: 0 },
+                utilities: { quantity: 0, unit: 'each', rate: 5000.00, waste: 0, total: 0 },
+                landscaping: { quantity: 0, unit: 'sqft', rate: 3.00, waste: 10, total: 0 }
+              }, 
+              total: 0 
+            },
+            structure: { 
+              items: {
+                framing: { quantity: 0, unit: 'sqft', rate: 8.00, waste: 5, total: 0 },
+                roofing: { quantity: 0, unit: 'sqft', rate: 4.50, waste: 10, total: 0 },
+                siding: { quantity: 0, unit: 'sqft', rate: 6.00, waste: 5, total: 0 },
+                windows: { quantity: 0, unit: 'each', rate: 800.00, waste: 0, total: 0 }
+              }, 
+              total: 0 
+            },
+            systems: { 
+              items: {
+                electrical: { quantity: 0, unit: 'sqft', rate: 3.50, waste: 5, total: 0 },
+                plumbing: { quantity: 0, unit: 'sqft', rate: 4.00, waste: 5, total: 0 },
+                hvac: { quantity: 0, unit: 'sqft', rate: 5.00, waste: 5, total: 0 },
+                insulation: { quantity: 0, unit: 'sqft', rate: 1.50, waste: 10, total: 0 }
+              }, 
+              total: 0 
+            },
+            finishes: { 
+              items: {
+                drywall: { quantity: 0, unit: 'sqft', rate: 2.00, waste: 5, total: 0 },
+                flooring: { quantity: 0, unit: 'sqft', rate: 4.00, waste: 10, total: 0 },
+                cabinets: { quantity: 0, unit: 'linear ft', rate: 200.00, waste: 0, total: 0 },
+                countertops: { quantity: 0, unit: 'sqft', rate: 50.00, waste: 10, total: 0 },
+                paint: { quantity: 0, unit: 'sqft', rate: 1.50, waste: 5, total: 0 },
+                trim: { quantity: 0, unit: 'linear ft', rate: 8.00, waste: 10, total: 0 }
+              }, 
+              total: 0 
+            }
+          },
+          overhead: { percentage: 15, amount: 0 },
+          profit: { percentage: 20, amount: 0 },
+          salesTax: { percentage: 7.25, amount: 0 },
+          totalEstimate: 0,
+          manualOverride: 0
+        } : undefined,
         actual: {
           changeOrders: [],
           materialInvoices: [],

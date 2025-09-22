@@ -11,7 +11,7 @@ import { toast } from '@/components/ui/use-toast';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
-const QuoteModal = ({ job, estimateCalculations, onClose, isCommercial = false }) => {
+const QuoteModal = ({ job, estimateCalculations, onClose, isCommercial = false, isResidentialConstruction = false }) => {
   const [emailData, setEmailData] = useState({
     to: job?.clientEmail || '',
     subject: `Quote for ${job?.jobName || 'Project'}`,
@@ -23,11 +23,17 @@ ${isCommercial ?
   `This commercial quote includes comprehensive drywall installation services with detailed breakdown of all labor, materials, and equipment costs. The estimate covers all specified scopes of work with proper overhead and profit calculations.
 
 Bid Version: ${job?.financials?.commercialEstimate?.currentBidVersion || 'Initial'}` :
+  isResidentialConstruction ?
+  `This residential construction quote includes comprehensive full-home construction services covering all phases from site work through final finishes. The estimate includes detailed breakdowns for excavation, foundation, framing, systems (electrical, plumbing, HVAC), and finishes with proper overhead and profit calculations.
+
+This is a complete turnkey construction project managed by HSH Contractor as the General Contractor.` :
   'The quote includes comprehensive hang and finish specifications with Level 4 finish (industry standard), all materials, and complete installation services.'
 }
 
 Total Quote Amount: $${isCommercial ? 
   (estimateCalculations?.finalTotalEstimate || estimateCalculations?.totalWithTax || 0).toFixed(2) :
+  isResidentialConstruction ?
+  (estimateCalculations?.finalTotal || estimateCalculations?.totalWithTax || 0).toFixed(2) :
   (estimateCalculations?.totalEstimate || 0).toFixed(2)
 }
 Payment Terms: Net 30 days upon completion
@@ -319,8 +325,45 @@ HSH Contractor Management`
           ['', `Profit (${estimateCalculations?.profitPercentage?.toFixed(1) || '0'}%)`, `$${estimateCalculations?.profitAmount?.toFixed(2) || '0.00'}`],
           ['', 'Sales Tax (Materials Only)', `$${estimateCalculations?.salesTax?.toFixed(2) || '0.00'}`]
         ];
+      } else if (isResidentialConstruction) {
+        // Residential Construction estimate breakdown
+        tableColumn = ['Phase', 'Item', 'Amount'];
+        tableRows = [];
+        
+        // Add each phase
+        const phases = [
+          { name: 'Site Work', key: 'sitework', items: ['excavation', 'foundation', 'utilities', 'landscaping'] },
+          { name: 'Structure', key: 'structure', items: ['framing', 'roofing', 'siding', 'windows'] },
+          { name: 'Systems', key: 'systems', items: ['electrical', 'plumbing', 'hvac', 'insulation'] },
+          { name: 'Finishes', key: 'finishes', items: ['drywall', 'flooring', 'cabinets', 'countertops', 'paint', 'trim'] }
+        ];
+        
+        phases.forEach(phase => {
+          const phaseData = job?.financials?.residentialConstruction?.phases?.[phase.key];
+          if (phaseData) {
+            phase.items.forEach(itemKey => {
+              const item = phaseData.items?.[itemKey];
+              if (item && item.total > 0) {
+                const itemName = itemKey.charAt(0).toUpperCase() + itemKey.slice(1).replace(/([A-Z])/g, ' $1');
+                tableRows.push([phase.name, itemName, `$${item.total.toFixed(2)}`]);
+              }
+            });
+            if (phaseData.total > 0) {
+              tableRows.push(['', `${phase.name} Subtotal`, `$${phaseData.total.toFixed(2)}`]);
+            }
+          }
+        });
+        
+        // Add overhead, profit, and tax
+        const residentialConstructionFinancials = job?.financials?.residentialConstruction;
+        if (residentialConstructionFinancials) {
+          tableRows.push(['', 'Subtotal', `$${calculations.subtotal.toFixed(2)}`]);
+          tableRows.push(['', `Overhead (${residentialConstructionFinancials.overhead.percentage}%)`, `$${residentialConstructionFinancials.overhead.amount.toFixed(2)}`]);
+          tableRows.push(['', `Profit (${residentialConstructionFinancials.profit.percentage}%)`, `$${residentialConstructionFinancials.profit.amount.toFixed(2)}`]);
+          tableRows.push(['', 'Sales Tax', `$${residentialConstructionFinancials.salesTax.amount.toFixed(2)}`]);
+        }
       } else {
-        // Residential estimate breakdown
+        // Residential (drywall only) estimate breakdown
         tableColumn = ['Description', 'Rate', 'Quantity', 'Amount'];
         tableRows = [
           ['Drywall Material', `$${estimateCalculations?.drywallMaterialRate?.toFixed(2) || '0.00'}/sqft`, `${estimateCalculations?.sqft?.toLocaleString() || '0'} sqft`, `$${estimateCalculations?.materialCost?.toFixed(2) || '0.00'}`],
@@ -340,6 +383,10 @@ HSH Contractor Management`
         styles: { fontSize: 10 },
         columnStyles: isCommercial ? {
           0: { cellWidth: 30, halign: 'center' },
+          1: { cellWidth: 80, halign: 'left' },
+          2: { cellWidth: 35, halign: 'right', fontStyle: 'bold' }
+        } : isResidentialConstruction ? {
+          0: { cellWidth: 40, halign: 'left' },
           1: { cellWidth: 80, halign: 'left' },
           2: { cellWidth: 35, halign: 'right', fontStyle: 'bold' }
         } : {
@@ -410,6 +457,8 @@ HSH Contractor Management`
       doc.text('Total Quote Amount:', pageWidth - 80, yPos);
       const totalAmount = isCommercial ? 
         (estimateCalculations?.finalTotalEstimate || estimateCalculations?.totalWithTax || 0) :
+        isResidentialConstruction ?
+        (estimateCalculations?.finalTotal || estimateCalculations?.totalWithTax || 0) :
         (estimateCalculations?.totalEstimate || 0);
       doc.text(`$${totalAmount.toFixed(2)}`, pageWidth - 20, yPos, { align: 'right' });
       yPos += 20;
@@ -557,7 +606,13 @@ HSH Contractor Management`
                       <span className="font-semibold">Square Footage:</span> {estimateCalculations?.sqft?.toLocaleString() || '0'} sqft
                     </div>
                     <div>
-                      <span className="font-semibold">Total Quote:</span> ${estimateCalculations?.totalEstimate?.toFixed(2) || '0.00'}
+                      <span className="font-semibold">Total Quote:</span> ${
+                        isCommercial ? 
+                          (estimateCalculations?.finalTotalEstimate || estimateCalculations?.totalWithTax || 0).toFixed(2) :
+                          isResidentialConstruction ?
+                          (estimateCalculations?.finalTotal || estimateCalculations?.totalWithTax || 0).toFixed(2) :
+                          (estimateCalculations?.totalEstimate || 0).toFixed(2)
+                      }
                     </div>
                     {isCommercial && job?.financials?.commercialEstimate?.currentBidVersion && (
                       <div>
