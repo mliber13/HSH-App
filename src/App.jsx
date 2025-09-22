@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Building2, Plus, ArrowLeft, Clock, DollarSign, LogOut, Calendar, Database, BarChart3, FileText, DollarSign as DollarSignIcon, Warehouse, TrendingUp, MapPin, Truck, Globe, Users, Settings, Users as UsersIcon, Calculator, X, Building2 as Building2Icon, Bot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { initializeSampleData } from '@/data/sampleData';
 
 import NavigationDropdown from '@/components/ui/navigation-dropdown';
 import { Toaster } from '@/components/ui/toaster';
@@ -40,6 +41,11 @@ function AppContent({ onLogout }) {
   const [currentJobView, setCurrentJobView] = useState('jobs'); // Job sub-navigation
   const [showDataManager, setShowDataManager] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  // Initialize sample data on app load
+  useEffect(() => {
+    initializeSampleData();
+  }, []);
 
   // Replace selectedJob with selectedJobId
   const [selectedJobId, setSelectedJobId] = useState(null);

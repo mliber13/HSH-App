@@ -331,14 +331,14 @@ HSH Contractor Management`
         tableRows = [];
         
         // Add each phase
-        const phases = [
-          { name: 'Site Work', key: 'sitework', items: ['sitePreparation', 'foundation'] },
-          { name: 'Structure', key: 'structure', items: ['framing', 'roofing'] },
-          { name: 'Systems', key: 'systems', items: ['plumbingRoughIn', 'electricalRoughIn', 'hvacInstallation', 'insulation'] },
-          { name: 'Drywall', key: 'drywall', items: ['drywallHang', 'drywallFinish'] },
-          { name: 'Finishes', key: 'finishes', items: ['paintTrim', 'flooring', 'kitchenBath'] },
-          { name: 'Management', key: 'management', items: ['finalWalkthrough'] }
-        ];
+          const phases = [
+            { name: 'Site Work', key: 'sitework', items: ['excavationEarthwork', 'utilities', 'sitePreparation', 'foundation', 'landscaping'] },
+            { name: 'Structure', key: 'structure', items: ['framing', 'windowsDoors', 'siding', 'roofing'] },
+            { name: 'Mechanicals', key: 'mechanicals', items: ['electrical', 'hvac', 'plumbing'] },
+            { name: 'Insulation', key: 'insulation', items: ['wallInsulation', 'ceilingInsulation', 'floorInsulation'] },
+            { name: 'Finishes', key: 'finishes', items: ['drywall', 'paint', 'trim', 'appliances', 'cabinets', 'flooring'] },
+            { name: 'Management', key: 'management', items: ['projectManagement', 'finalWalkthrough'] }
+          ];
         
         phases.forEach(phase => {
           const phaseData = job?.financials?.residentialConstruction?.phases?.[phase.key];

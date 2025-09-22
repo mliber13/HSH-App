@@ -39,7 +39,7 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
     { value: 'gallons', label: 'Gallons (GAL)' }
   ];
 
-  // Trade categories for residential construction - matching all scopes of work
+  // Estimating categories for residential construction - organized by construction phase
   const tradeCategories = {
     sitework: {
       name: 'Site Work',
@@ -48,8 +48,11 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       bgColor: 'bg-orange-50',
       borderColor: 'border-orange-200',
       items: [
+        { key: 'excavationEarthwork', label: 'Excavation & Earthwork', defaultUnit: 'sqft' },
+        { key: 'utilities', label: 'Utilities', defaultUnit: 'lf' },
         { key: 'sitePreparation', label: 'Site Preparation', defaultUnit: 'sqft' },
-        { key: 'foundation', label: 'Foundation', defaultUnit: 'sqft' }
+        { key: 'foundation', label: 'Foundation', defaultUnit: 'sqft' },
+        { key: 'landscaping', label: 'Landscaping', defaultUnit: 'sqft' }
       ]
     },
     structure: {
@@ -60,31 +63,33 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       borderColor: 'border-blue-200',
       items: [
         { key: 'framing', label: 'Framing', defaultUnit: 'sqft' },
+        { key: 'windowsDoors', label: 'Windows & Doors', defaultUnit: 'each' },
+        { key: 'siding', label: 'Siding', defaultUnit: 'sqft' },
         { key: 'roofing', label: 'Roofing', defaultUnit: 'sqft' }
       ]
     },
-    systems: {
-      name: 'Systems',
+    mechanicals: {
+      name: 'Mechanicals',
       icon: Wrench,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
       borderColor: 'border-green-200',
       items: [
-        { key: 'plumbingRoughIn', label: 'Plumbing Rough-In', defaultUnit: 'sqft' },
-        { key: 'electricalRoughIn', label: 'Electrical Rough-In', defaultUnit: 'sqft' },
-        { key: 'hvacInstallation', label: 'HVAC Installation', defaultUnit: 'sqft' },
-        { key: 'insulation', label: 'Insulation', defaultUnit: 'sqft' }
+        { key: 'electrical', label: 'Electrical', defaultUnit: 'sqft' },
+        { key: 'hvac', label: 'HVAC', defaultUnit: 'sqft' },
+        { key: 'plumbing', label: 'Plumbing', defaultUnit: 'sqft' }
       ]
     },
-    drywall: {
-      name: 'Drywall',
-      icon: FileText,
+    insulation: {
+      name: 'Insulation',
+      icon: Home,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50',
       borderColor: 'border-yellow-200',
       items: [
-        { key: 'drywallHang', label: 'Drywall Hang', defaultUnit: 'sqft' },
-        { key: 'drywallFinish', label: 'Drywall Finish', defaultUnit: 'sqft' }
+        { key: 'wallInsulation', label: 'Wall Insulation', defaultUnit: 'sqft' },
+        { key: 'ceilingInsulation', label: 'Ceiling/Attic Insulation', defaultUnit: 'sqft' },
+        { key: 'floorInsulation', label: 'Floor Insulation', defaultUnit: 'sqft' }
       ]
     },
     finishes: {
@@ -94,9 +99,12 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       bgColor: 'bg-purple-50',
       borderColor: 'border-purple-200',
       items: [
-        { key: 'paintTrim', label: 'Paint & Trim', defaultUnit: 'sqft' },
-        { key: 'flooring', label: 'Flooring', defaultUnit: 'sqft' },
-        { key: 'kitchenBath', label: 'Kitchen & Bath', defaultUnit: 'each' }
+        { key: 'drywall', label: 'Drywall', defaultUnit: 'sqft' },
+        { key: 'paint', label: 'Paint', defaultUnit: 'sqft' },
+        { key: 'trim', label: 'Trim Work', defaultUnit: 'lf' },
+        { key: 'appliances', label: 'Appliances', defaultUnit: 'each' },
+        { key: 'cabinets', label: 'Cabinets', defaultUnit: 'lf' },
+        { key: 'flooring', label: 'Flooring', defaultUnit: 'sqft' }
       ]
     },
     management: {
@@ -106,6 +114,7 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       bgColor: 'bg-gray-50',
       borderColor: 'border-gray-200',
       items: [
+        { key: 'projectManagement', label: 'Project Management', defaultUnit: 'hours' },
         { key: 'finalWalkthrough', label: 'Final Walkthrough', defaultUnit: 'hours' }
       ]
     }
@@ -113,14 +122,16 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
 
   // Initialize financial data structure
   const initializeFinancials = () => {
+    console.log('Initializing financials for job:', job);
     try {
       if (!job?.financials?.residentialConstruction) {
-      const residentialConstructionFinancials = {
+        console.log('Creating new residential construction financials');
+        const residentialConstructionFinancials = {
         phases: {
           sitework: { items: {}, total: 0 },
           structure: { items: {}, total: 0 },
-          systems: { items: {}, total: 0 },
-          drywall: { items: {}, total: 0 },
+          mechanicals: { items: {}, total: 0 },
+          insulation: { items: {}, total: 0 },
           finishes: { items: {}, total: 0 },
           management: { items: {}, total: 0 }
         },
@@ -177,9 +188,54 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
         });
       });
 
-      return residentialConstructionFinancials;
+        return residentialConstructionFinancials;
       }
-      return job.financials.residentialConstruction;
+      
+      // If job already has residentialConstruction financials, ensure all phases exist
+      const existingFinancials = job.financials.residentialConstruction;
+      const requiredPhases = ['sitework', 'structure', 'mechanicals', 'insulation', 'finishes', 'management'];
+      
+      // Check if any phases are missing and add them, also check for missing items
+      let needsUpdate = false;
+      requiredPhases.forEach(phase => {
+        if (!existingFinancials.phases[phase]) {
+          console.log(`Adding missing phase: ${phase}`);
+          existingFinancials.phases[phase] = { items: {}, total: 0 };
+          needsUpdate = true;
+        }
+        
+        // Check if phase items are missing and add them
+        const phaseItems = tradeCategories[phase]?.items || [];
+        phaseItems.forEach(item => {
+          if (!existingFinancials.phases[phase].items[item.key]) {
+            console.log(`Adding missing item: ${item.key} to phase: ${phase}`);
+            existingFinancials.phases[phase].items[item.key] = {
+              contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+              labor: { quantity: 0, unit: item.defaultUnit, ratePerUnit: 0, waste: 5, total: 0 },
+              material: { quantity: 0, unit: item.defaultUnit, ratePerUnit: 0, waste: 5, total: 0 },
+              subtotal: 0, total: 0, notes: ''
+            };
+            needsUpdate = true;
+          }
+        });
+      });
+      
+      // If we added missing phases, we should update the job
+      if (needsUpdate) {
+        console.log('Updated existing financials with missing phases');
+        // Trigger a job update to save the changes
+        setTimeout(() => {
+          onUpdateJob({
+            ...job,
+            financials: {
+              ...job.financials,
+              residentialConstruction: existingFinancials
+            }
+          });
+        }, 0);
+      }
+      
+      return existingFinancials;
     } catch (error) {
       console.error('Error initializing financials:', error);
       // Return a basic structure if there's an error
@@ -187,8 +243,8 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
         phases: {
           sitework: { items: {}, total: 0 },
           structure: { items: {}, total: 0 },
-          systems: { items: {}, total: 0 },
-          drywall: { items: {}, total: 0 },
+          mechanicals: { items: {}, total: 0 },
+          insulation: { items: {}, total: 0 },
           finishes: { items: {}, total: 0 },
           management: { items: {}, total: 0 }
         },
@@ -201,7 +257,7 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
     }
   };
 
-  const [financials, setFinancials] = useState(initializeFinancials());
+  const [financials, setFinancials] = useState(() => initializeFinancials());
 
   // Update financial calculations
   const updateCalculations = () => {
@@ -308,8 +364,8 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
   };
 
   // Render trade item input with detailed breakdown
-  const renderTradeItem = (phase, item) => {
-    const itemData = financials.phases[phase].items[item.key];
+  const renderTradeItem = (phase, item, phaseData) => {
+    const itemData = phaseData?.items?.[item.key];
     if (!itemData) return null;
 
     return (
@@ -558,6 +614,13 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
   // Render trade category
   const renderTradeCategory = (phaseKey, category) => {
     const Icon = category.icon;
+    const phaseData = financials?.phases?.[phaseKey];
+    
+    // Safety check - if phase data doesn't exist, return null
+    if (!phaseData) {
+      console.warn(`Phase data not found for ${phaseKey}`);
+      return null;
+    }
     
     return (
       <Card key={phaseKey} className={`border-2 ${category.borderColor} ${category.bgColor}`}>
@@ -570,14 +633,14 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
             <div className="text-right">
               <div className="text-sm text-gray-500">Phase Total</div>
               <div className="text-xl font-bold text-brandSecondary">
-                ${financials.phases[phaseKey].total.toFixed(2)}
+                ${phaseData.total.toFixed(2)}
               </div>
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-0">
           <div className="space-y-4">
-            {category.items.map(item => renderTradeItem(phaseKey, item))}
+            {category.items.map(item => renderTradeItem(phaseKey, item, phaseData))}
           </div>
         </CardContent>
       </Card>
@@ -606,6 +669,17 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
   };
 
   const calculations = getCalculations();
+
+  console.log('Rendering ResidentialConstructionEstimateTab with financials:', financials);
+
+  // Safety check - if financials is not properly initialized, show loading
+  if (!financials || !financials.phases) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-gray-500">Loading financial data...</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -654,12 +728,16 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Phase Totals */}
-              {Object.entries(tradeCategories).map(([phaseKey, category]) => (
-                <div key={phaseKey} className="flex justify-between items-center py-2">
-                  <span className="text-gray-700">{category.name}:</span>
-                  <span className="font-semibold">${financials.phases[phaseKey].total.toFixed(2)}</span>
-                </div>
-              ))}
+              {Object.entries(tradeCategories).map(([phaseKey, category]) => {
+                const phaseData = financials?.phases?.[phaseKey];
+                if (!phaseData) return null;
+                return (
+                  <div key={phaseKey} className="flex justify-between items-center py-2">
+                    <span className="text-gray-700">{category.name}:</span>
+                    <span className="font-semibold">${phaseData.total.toFixed(2)}</span>
+                  </div>
+                );
+              })}
               
               <div className="border-t pt-3">
                 <div className="flex justify-between items-center py-2">
