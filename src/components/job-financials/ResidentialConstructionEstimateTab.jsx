@@ -30,7 +30,7 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
     { value: 'gallons', label: 'Gallons (GAL)' }
   ];
 
-  // Trade categories for residential construction
+  // Trade categories for residential construction - matching all scopes of work
   const tradeCategories = {
     sitework: {
       name: 'Site Work',
@@ -39,10 +39,8 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       bgColor: 'bg-orange-50',
       borderColor: 'border-orange-200',
       items: [
-        { key: 'excavation', label: 'Excavation & Grading', defaultUnit: 'sqft' },
-        { key: 'foundation', label: 'Foundation Work', defaultUnit: 'sqft' },
-        { key: 'utilities', label: 'Utility Connections', defaultUnit: 'each' },
-        { key: 'landscaping', label: 'Landscaping', defaultUnit: 'sqft' }
+        { key: 'sitePreparation', label: 'Site Preparation', defaultUnit: 'sqft' },
+        { key: 'foundation', label: 'Foundation', defaultUnit: 'sqft' }
       ]
     },
     structure: {
@@ -53,9 +51,7 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       borderColor: 'border-blue-200',
       items: [
         { key: 'framing', label: 'Framing', defaultUnit: 'sqft' },
-        { key: 'roofing', label: 'Roofing', defaultUnit: 'sqft' },
-        { key: 'siding', label: 'Siding', defaultUnit: 'sqft' },
-        { key: 'windows', label: 'Windows & Doors', defaultUnit: 'each' }
+        { key: 'roofing', label: 'Roofing', defaultUnit: 'sqft' }
       ]
     },
     systems: {
@@ -65,10 +61,21 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       bgColor: 'bg-green-50',
       borderColor: 'border-green-200',
       items: [
-        { key: 'electrical', label: 'Electrical', defaultUnit: 'sqft' },
-        { key: 'plumbing', label: 'Plumbing', defaultUnit: 'sqft' },
-        { key: 'hvac', label: 'HVAC', defaultUnit: 'sqft' },
+        { key: 'plumbingRoughIn', label: 'Plumbing Rough-In', defaultUnit: 'sqft' },
+        { key: 'electricalRoughIn', label: 'Electrical Rough-In', defaultUnit: 'sqft' },
+        { key: 'hvacInstallation', label: 'HVAC Installation', defaultUnit: 'sqft' },
         { key: 'insulation', label: 'Insulation', defaultUnit: 'sqft' }
+      ]
+    },
+    drywall: {
+      name: 'Drywall',
+      icon: FileText,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200',
+      items: [
+        { key: 'drywallHang', label: 'Drywall Hang', defaultUnit: 'sqft' },
+        { key: 'drywallFinish', label: 'Drywall Finish', defaultUnit: 'sqft' }
       ]
     },
     finishes: {
@@ -78,12 +85,19 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       bgColor: 'bg-purple-50',
       borderColor: 'border-purple-200',
       items: [
-        { key: 'drywall', label: 'Drywall', defaultUnit: 'sqft' },
+        { key: 'paintTrim', label: 'Paint & Trim', defaultUnit: 'sqft' },
         { key: 'flooring', label: 'Flooring', defaultUnit: 'sqft' },
-        { key: 'cabinets', label: 'Cabinets', defaultUnit: 'linear ft' },
-        { key: 'countertops', label: 'Countertops', defaultUnit: 'sqft' },
-        { key: 'paint', label: 'Painting', defaultUnit: 'sqft' },
-        { key: 'trim', label: 'Trim Work', defaultUnit: 'linear ft' }
+        { key: 'kitchenBath', label: 'Kitchen & Bath', defaultUnit: 'each' }
+      ]
+    },
+    management: {
+      name: 'Management',
+      icon: Calculator,
+      color: 'text-gray-600',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
+      items: [
+        { key: 'finalWalkthrough', label: 'Final Walkthrough', defaultUnit: 'hours' }
       ]
     }
   };
@@ -583,13 +597,13 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
         <CardContent className="space-y-6">
           {/* Trade Categories */}
           <Tabs value={activeTrade} onValueChange={setActiveTrade}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
               {Object.entries(tradeCategories).map(([key, category]) => {
                 const Icon = category.icon;
                 return (
                   <TabsTrigger key={key} value={key} className="flex items-center space-x-2">
                     <Icon className="h-4 w-4" />
-                    <span className="hidden sm:inline">{category.name}</span>
+                    <span className="hidden lg:inline">{category.name}</span>
                   </TabsTrigger>
                 );
               })}

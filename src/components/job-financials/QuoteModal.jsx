@@ -332,10 +332,12 @@ HSH Contractor Management`
         
         // Add each phase
         const phases = [
-          { name: 'Site Work', key: 'sitework', items: ['excavation', 'foundation', 'utilities', 'landscaping'] },
-          { name: 'Structure', key: 'structure', items: ['framing', 'roofing', 'siding', 'windows'] },
-          { name: 'Systems', key: 'systems', items: ['electrical', 'plumbing', 'hvac', 'insulation'] },
-          { name: 'Finishes', key: 'finishes', items: ['drywall', 'flooring', 'cabinets', 'countertops', 'paint', 'trim'] }
+          { name: 'Site Work', key: 'sitework', items: ['sitePreparation', 'foundation'] },
+          { name: 'Structure', key: 'structure', items: ['framing', 'roofing'] },
+          { name: 'Systems', key: 'systems', items: ['plumbingRoughIn', 'electricalRoughIn', 'hvacInstallation', 'insulation'] },
+          { name: 'Drywall', key: 'drywall', items: ['drywallHang', 'drywallFinish'] },
+          { name: 'Finishes', key: 'finishes', items: ['paintTrim', 'flooring', 'kitchenBath'] },
+          { name: 'Management', key: 'management', items: ['finalWalkthrough'] }
         ];
         
         phases.forEach(phase => {

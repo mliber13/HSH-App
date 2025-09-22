@@ -900,7 +900,7 @@ export function useJobs() {
           phases: {
             sitework: { 
               items: {
-                excavation: { 
+                sitePreparation: { 
                   contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
                   labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
@@ -911,18 +911,6 @@ export function useJobs() {
                   labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   subtotal: 0, total: 0, notes: ''
-                },
-                utilities: { 
-                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
-                  labor: { quantity: 0, unit: 'each', ratePerUnit: 0, waste: 0, total: 0 },
-                  material: { quantity: 0, unit: 'each', ratePerUnit: 0, waste: 0, total: 0 },
-                  subtotal: 0, total: 0, notes: ''
-                },
-                landscaping: { 
-                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
-                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
-                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
-                  subtotal: 0, total: 0, notes: ''
                 }
               }, 
               total: 0 
@@ -930,7 +918,7 @@ export function useJobs() {
             structure: { 
               items: {
                 framing: { 
-                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  contractor: { type: 'in-house', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
                   labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   subtotal: 0, total: 0, notes: ''
@@ -940,44 +928,32 @@ export function useJobs() {
                   labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
                   material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
                   subtotal: 0, total: 0, notes: ''
-                },
-                siding: { 
-                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
-                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
-                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
-                  subtotal: 0, total: 0, notes: ''
-                },
-                windows: { 
-                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
-                  labor: { quantity: 0, unit: 'each', ratePerUnit: 0, waste: 0, total: 0 },
-                  material: { quantity: 0, unit: 'each', ratePerUnit: 0, waste: 0, total: 0 },
-                  subtotal: 0, total: 0, notes: ''
                 }
               }, 
               total: 0 
             },
             systems: { 
               items: {
-                electrical: { 
+                plumbingRoughIn: { 
                   contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
                   labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   subtotal: 0, total: 0, notes: ''
                 },
-                plumbing: { 
+                electricalRoughIn: { 
                   contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
                   labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   subtotal: 0, total: 0, notes: ''
                 },
-                hvac: { 
+                hvacInstallation: { 
                   contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
                   labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   subtotal: 0, total: 0, notes: ''
                 },
                 insulation: { 
-                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  contractor: { type: 'in-house', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
                   labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
                   material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
                   subtotal: 0, total: 0, notes: ''
@@ -985,9 +961,26 @@ export function useJobs() {
               }, 
               total: 0 
             },
+            drywall: { 
+              items: {
+                drywallHang: { 
+                  contractor: { type: 'in-house', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                },
+                drywallFinish: { 
+                  contractor: { type: 'in-house', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
+                  subtotal: 0, total: 0, notes: ''
+                }
+              }, 
+              total: 0 
+            },
             finishes: { 
               items: {
-                drywall: { 
+                paintTrim: { 
                   contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
                   labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
                   material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
@@ -999,28 +992,21 @@ export function useJobs() {
                   material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
                   subtotal: 0, total: 0, notes: ''
                 },
-                cabinets: { 
+                kitchenBath: { 
                   contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
-                  labor: { quantity: 0, unit: 'linear ft', ratePerUnit: 0, waste: 0, total: 0 },
-                  material: { quantity: 0, unit: 'linear ft', ratePerUnit: 0, waste: 0, total: 0 },
+                  labor: { quantity: 0, unit: 'each', ratePerUnit: 0, waste: 0, total: 0 },
+                  material: { quantity: 0, unit: 'each', ratePerUnit: 0, waste: 0, total: 0 },
                   subtotal: 0, total: 0, notes: ''
-                },
-                countertops: { 
-                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
-                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
-                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 10, total: 0 },
-                  subtotal: 0, total: 0, notes: ''
-                },
-                paint: { 
-                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
-                  labor: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
-                  material: { quantity: 0, unit: 'sqft', ratePerUnit: 0, waste: 5, total: 0 },
-                  subtotal: 0, total: 0, notes: ''
-                },
-                trim: { 
-                  contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
-                  labor: { quantity: 0, unit: 'linear ft', ratePerUnit: 0, waste: 10, total: 0 },
-                  material: { quantity: 0, unit: 'linear ft', ratePerUnit: 0, waste: 10, total: 0 },
+                }
+              }, 
+              total: 0 
+            },
+            management: { 
+              items: {
+                finalWalkthrough: { 
+                  contractor: { type: 'in-house', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+                  labor: { quantity: 0, unit: 'hours', ratePerUnit: 0, waste: 0, total: 0 },
+                  material: { quantity: 0, unit: 'hours', ratePerUnit: 0, waste: 0, total: 0 },
                   subtotal: 0, total: 0, notes: ''
                 }
               }, 
