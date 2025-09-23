@@ -337,6 +337,12 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
   const handleContractorChange = (phase, itemKey, field, value) => {
     const updatedFinancials = { ...financials };
     updatedFinancials.phases[phase].items[itemKey].contractor[field] = value;
+    
+    // Auto-fill "HSH Contractor" when "In-House" type is selected
+    if (field === 'type' && value === 'in-house') {
+      updatedFinancials.phases[phase].items[itemKey].contractor.name = 'HSH Contractor';
+    }
+    
     setFinancials(updatedFinancials);
     updateCalculations();
   };
