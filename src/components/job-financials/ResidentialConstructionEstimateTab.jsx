@@ -840,7 +840,7 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob, employees = [] }
             </h5>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                ${(itemData.contractor.quoteAmount || 0).toFixed(2)}
+                ${(parseFloat(itemData.contractor.quoteAmount) || 0).toFixed(2)}
               </div>
               <p className="text-sm text-gray-600 mt-1">Total Quote Amount</p>
             </div>
