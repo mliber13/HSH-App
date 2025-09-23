@@ -339,6 +339,7 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
     updatedFinancials.phases[phase].items[itemKey].contractor[field] = value;
     
     // Auto-fill "HSH Contractor" when "In-House" type is selected
+    // Force deployment trigger
     if (field === 'type' && value === 'in-house') {
       updatedFinancials.phases[phase].items[itemKey].contractor.name = 'HSH Contractor';
     }
