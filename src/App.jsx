@@ -527,6 +527,7 @@ function AppContent({ onLogout }) {
             onUpdateJob={(jobId, updates) => updateJob(jobId, updates, handleJobUpdated)}
             disableAutoSyncTemporarily={disableAutoSyncTemporarily}
             forceRecalculateLaborCosts={forceRecalculateLaborCosts}
+            employees={employees}
           />
         );
       

@@ -41,6 +41,7 @@ const JobDocuments = ({ jobId, documents = [], onUploadDocument, onDeleteDocumen
     { id: 'photos', name: 'Site Photos', icon: Image, color: 'bg-green-100 text-green-800' },
     { id: 'contracts', name: 'Contracts & Legal', icon: File, color: 'bg-purple-100 text-purple-800' },
     { id: 'specifications', name: 'Specifications', icon: FileText, color: 'bg-orange-100 text-orange-800' },
+    { id: 'quotes', name: 'Quotes & Estimates', icon: FileText, color: 'bg-yellow-100 text-yellow-800' },
     { id: 'invoices', name: 'Invoices & Receipts', icon: File, color: 'bg-red-100 text-red-800' },
     { id: 'other', name: 'Other', icon: File, color: 'bg-gray-100 text-gray-800' }
   ];

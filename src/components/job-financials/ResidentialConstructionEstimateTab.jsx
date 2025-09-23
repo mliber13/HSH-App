@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
-import { Calculator, Send, FileText, DollarSign, Percent, Building, Hammer, Wrench, Zap, Droplets, Wind, Home } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Calculator, Send, FileText, DollarSign, Percent, Building, Hammer, Wrench, Zap, Droplets, Wind, Home, Paperclip, Eye, Trash2, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { toast } from '@/components/ui/use-toast';
 import QuoteModal from './QuoteModal';
 
-const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
+const ResidentialConstructionEstimateTab = ({ job, onUpdateJob, employees = [] }) => {
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [activeTrade, setActiveTrade] = useState('sitework');
+  const fileInputRef = useRef(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(null);
 
   // Add error boundary protection
   if (!job) {
@@ -162,7 +166,8 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
               contact: '',
               quoteReceived: false,
               quoteDate: null,
-              quoteAmount: 0
+              quoteAmount: 0,
+              attachments: [] // Array to store quote attachments
             },
             // Labor breakdown
             labor: {
@@ -210,12 +215,18 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
           if (!existingFinancials.phases[phase].items[item.key]) {
             console.log(`Adding missing item: ${item.key} to phase: ${phase}`);
             existingFinancials.phases[phase].items[item.key] = {
-              contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0 },
+              contractor: { type: 'subcontractor', name: '', contact: '', quoteReceived: false, quoteDate: null, quoteAmount: 0, attachments: [] },
               labor: { quantity: 0, unit: item.defaultUnit, ratePerUnit: 0, waste: 5, total: 0 },
               material: { quantity: 0, unit: item.defaultUnit, ratePerUnit: 0, waste: 5, total: 0 },
               subtotal: 0, total: 0, notes: ''
             };
             needsUpdate = true;
+          } else {
+            // Ensure existing items have attachments array
+            if (!existingFinancials.phases[phase].items[item.key].contractor.attachments) {
+              existingFinancials.phases[phase].items[item.key].contractor.attachments = [];
+              needsUpdate = true;
+            }
           }
         });
       });
@@ -270,44 +281,44 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
         const item = updatedFinancials.phases[phase].items[itemKey];
         
         // Calculate labor total
-        const laborAdjustedQty = item.labor.quantity * (1 + item.labor.waste / 100);
-        item.labor.total = laborAdjustedQty * item.labor.ratePerUnit;
+        const laborAdjustedQty = (item.labor.quantity || 0) * (1 + (item.labor.waste || 0) / 100);
+        item.labor.total = laborAdjustedQty * (item.labor.ratePerUnit || 0);
         
         // Calculate material total
-        const materialAdjustedQty = item.material.quantity * (1 + item.material.waste / 100);
-        item.material.total = materialAdjustedQty * item.material.ratePerUnit;
+        const materialAdjustedQty = (item.material.quantity || 0) * (1 + (item.material.waste || 0) / 100);
+        item.material.total = materialAdjustedQty * (item.material.ratePerUnit || 0);
         
         // Calculate item subtotal and total
-        item.subtotal = item.labor.total + item.material.total;
+        item.subtotal = (item.labor.total || 0) + (item.material.total || 0);
         
         // If contractor quote is received, use that amount, otherwise use calculated total
         if (item.contractor.quoteReceived && item.contractor.quoteAmount > 0) {
-          item.total = item.contractor.quoteAmount;
+          item.total = parseFloat(item.contractor.quoteAmount) || 0;
         } else {
-          item.total = item.subtotal;
+          item.total = item.subtotal || 0;
         }
         
-        phaseTotal += item.total;
+        phaseTotal += (item.total || 0);
       });
       updatedFinancials.phases[phase].total = phaseTotal;
     });
 
     // Calculate subtotal
-    const subtotal = Object.values(updatedFinancials.phases).reduce((sum, phase) => sum + phase.total, 0);
+    const subtotal = Object.values(updatedFinancials.phases).reduce((sum, phase) => sum + (phase.total || 0), 0);
     
     // Calculate overhead
-    updatedFinancials.overhead.amount = subtotal * (updatedFinancials.overhead.percentage / 100);
-    const subtotalWithOverhead = subtotal + updatedFinancials.overhead.amount;
+    updatedFinancials.overhead.amount = subtotal * ((updatedFinancials.overhead.percentage || 0) / 100);
+    const subtotalWithOverhead = subtotal + (updatedFinancials.overhead.amount || 0);
     
     // Calculate profit
-    updatedFinancials.profit.amount = subtotalWithOverhead * (updatedFinancials.profit.percentage / 100);
-    const subtotalWithProfit = subtotalWithOverhead + updatedFinancials.profit.amount;
+    updatedFinancials.profit.amount = subtotalWithOverhead * ((updatedFinancials.profit.percentage || 0) / 100);
+    const subtotalWithProfit = subtotalWithOverhead + (updatedFinancials.profit.amount || 0);
     
     // Calculate sales tax (on materials only - simplified for now)
-    updatedFinancials.salesTax.amount = subtotalWithProfit * (updatedFinancials.salesTax.percentage / 100);
+    updatedFinancials.salesTax.amount = subtotalWithProfit * ((updatedFinancials.salesTax.percentage || 0) / 100);
     
     // Calculate total estimate
-    updatedFinancials.totalEstimate = subtotalWithProfit + updatedFinancials.salesTax.amount;
+    updatedFinancials.totalEstimate = subtotalWithProfit + (updatedFinancials.salesTax.amount || 0);
     
     setFinancials(updatedFinancials);
     
@@ -344,6 +355,11 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       updatedFinancials.phases[phase].items[itemKey].contractor.name = 'HSH Contractor';
     }
     
+    // Ensure attachments array exists
+    if (!updatedFinancials.phases[phase].items[itemKey].contractor.attachments) {
+      updatedFinancials.phases[phase].items[itemKey].contractor.attachments = [];
+    }
+    
     setFinancials(updatedFinancials);
     updateCalculations();
   };
@@ -370,6 +386,109 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
     }
   };
 
+  // Attachment handling functions
+  const handleAttachmentUpload = async (phase, itemKey, file) => {
+    const attachmentId = `attachment-${Date.now()}`;
+    const attachment = {
+      id: attachmentId,
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      uploadedAt: new Date().toISOString(),
+      file: file // Store the actual file object
+    };
+
+    const updatedFinancials = { ...financials };
+    if (!updatedFinancials.phases[phase].items[itemKey].contractor.attachments) {
+      updatedFinancials.phases[phase].items[itemKey].contractor.attachments = [];
+    }
+    updatedFinancials.phases[phase].items[itemKey].contractor.attachments.push(attachment);
+    
+    setFinancials(updatedFinancials);
+    updateCalculations();
+
+    // Also add to job documents
+    if (onUpdateJob) {
+      const jobDocument = {
+        id: attachmentId,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        category: 'quotes', // Quote attachments go in quotes category
+        uploadedAt: new Date().toISOString(),
+        description: `Quote attachment for ${itemKey} - ${updatedFinancials.phases[phase].items[itemKey].contractor.name || 'Contractor'}`,
+        file: file,
+        // Add metadata to track this as a financials attachment
+        source: 'financials',
+        financialsData: {
+          phase: phase,
+          itemKey: itemKey,
+          contractorName: updatedFinancials.phases[phase].items[itemKey].contractor.name || 'Contractor'
+        }
+      };
+
+      // Add to job documents
+      const currentDocuments = job.documents || [];
+      onUpdateJob(job.id, {
+        documents: [...currentDocuments, jobDocument]
+      });
+    }
+
+    toast({
+      title: "Attachment Added",
+      description: `Quote attachment "${file.name}" has been added successfully.`
+    });
+  };
+
+  const handleAttachmentDelete = (phase, itemKey, attachmentId) => {
+    const updatedFinancials = { ...financials };
+    updatedFinancials.phases[phase].items[itemKey].contractor.attachments = 
+      updatedFinancials.phases[phase].items[itemKey].contractor.attachments.filter(att => att.id !== attachmentId);
+    
+    setFinancials(updatedFinancials);
+    updateCalculations();
+
+    // Also remove from job documents
+    if (onUpdateJob) {
+      const currentDocuments = job.documents || [];
+      onUpdateJob(job.id, {
+        documents: currentDocuments.filter(doc => doc.id !== attachmentId),
+        financials: {
+          ...job.financials,
+          residentialConstruction: updatedFinancials
+        }
+      });
+    }
+
+    toast({
+      title: "Attachment Removed",
+      description: "Quote attachment has been removed successfully."
+    });
+  };
+
+  const handleFileInputChange = (phase, itemKey, event) => {
+    const file = event.target.files[0];
+    if (file) {
+      handleAttachmentUpload(phase, itemKey, file);
+    }
+    // Reset the input
+    event.target.value = '';
+  };
+
+  const openFileInput = (phase, itemKey) => {
+    fileInputRef.current = { phase, itemKey };
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx';
+    input.onchange = (e) => handleFileInputChange(phase, itemKey, e);
+    input.click();
+  };
+
+  // Get available subcontractors
+  const getAvailableSubcontractors = () => {
+    return employees.filter(emp => emp.employeeType === 'Subcontractor');
+  };
+
   // Render trade item input with detailed breakdown
   const renderTradeItem = (phase, item, phaseData) => {
     const itemData = phaseData?.items?.[item.key];
@@ -383,7 +502,7 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
           <div className="text-right">
             <div className="text-sm text-gray-500">Total</div>
             <div className="text-xl font-bold text-brandSecondary">
-              ${itemData.total.toFixed(2)}
+              ${(itemData.total || 0).toFixed(2)}
             </div>
           </div>
         </div>
@@ -401,19 +520,36 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="subcontractor">Subcontractor</SelectItem>
-                <SelectItem value="employee">Employee</SelectItem>
                 <SelectItem value="in-house">In-House</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label className="text-sm font-medium text-gray-700">Name/Company</Label>
-            <Input
-              value={itemData.contractor.name}
-              onChange={(e) => handleContractorChange(phase, item.key, 'name', e.target.value)}
-              placeholder="Enter name or company"
-              className="h-8"
-            />
+            {itemData.contractor.type === 'subcontractor' ? (
+              <Select
+                value={itemData.contractor.name}
+                onValueChange={(value) => handleContractorChange(phase, item.key, 'name', value)}
+              >
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Select subcontractor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableSubcontractors().map((subcontractor) => (
+                    <SelectItem key={subcontractor.id} value={subcontractor.name}>
+                      {subcontractor.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                value={itemData.contractor.name}
+                onChange={(e) => handleContractorChange(phase, item.key, 'name', e.target.value)}
+                placeholder="Enter name or company"
+                className="h-8"
+              />
+            )}
           </div>
           <div>
             <Label className="text-sm font-medium text-gray-700">Contact</Label>
@@ -459,150 +595,257 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
           </div>
         </div>
 
-        {/* Labor and Material Breakdown */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Labor Section */}
-          <div className="border border-gray-200 rounded p-3">
-            <h5 className="font-semibold text-gray-800 mb-3 flex items-center">
-              <Hammer className="h-4 w-4 mr-2 text-blue-600" />
-              Labor
-            </h5>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs text-gray-600">Quantity</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={itemData.labor.quantity}
-                    onChange={(e) => handleInputChange(phase, item.key, 'labor', 'quantity', e.target.value)}
-                    placeholder="0"
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-600">Unit</Label>
-                  <Select
-                    value={itemData.labor.unit}
-                    onValueChange={(value) => handleInputChange(phase, item.key, 'labor', 'unit', value)}
-                  >
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {unitTypes.map(unit => (
-                        <SelectItem key={unit.value} value={unit.value}>
-                          {unit.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs text-gray-600">Rate per Unit</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={itemData.labor.ratePerUnit}
-                    onChange={(e) => handleInputChange(phase, item.key, 'labor', 'ratePerUnit', e.target.value)}
-                    placeholder="0.00"
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-600">Waste %</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={itemData.labor.waste}
-                    onChange={(e) => handleInputChange(phase, item.key, 'labor', 'waste', e.target.value)}
-                    placeholder="5"
-                    className="h-8 text-sm"
-                  />
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-sm text-gray-600">Labor Total: </span>
-                <span className="font-semibold text-blue-600">
-                  ${itemData.labor.total.toFixed(2)}
-                </span>
-              </div>
-            </div>
+        {/* Quote Attachments */}
+        <div className="mb-4 p-3 bg-green-50 rounded">
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-sm font-medium text-gray-700 flex items-center">
+              <Paperclip className="h-4 w-4 mr-2" />
+              Quote Attachments
+            </Label>
+            <Button
+              onClick={() => openFileInput(phase, item.key)}
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+            >
+              <Upload className="h-3 w-3 mr-1" />
+              Attach Quote
+            </Button>
           </div>
-
-          {/* Material Section */}
-          <div className="border border-gray-200 rounded p-3">
-            <h5 className="font-semibold text-gray-800 mb-3 flex items-center">
-              <Building className="h-4 w-4 mr-2 text-green-600" />
-              Material
-            </h5>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs text-gray-600">Quantity</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={itemData.material.quantity}
-                    onChange={(e) => handleInputChange(phase, item.key, 'material', 'quantity', e.target.value)}
-                    placeholder="0"
-                    className="h-8 text-sm"
-                  />
+          
+          {itemData.contractor.attachments && itemData.contractor.attachments.length > 0 ? (
+            <div className="space-y-2">
+              {itemData.contractor.attachments.map((attachment) => (
+                <div key={attachment.id} className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div className="flex items-center space-x-2">
+                    <FileText className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-700">{attachment.name}</span>
+                    <span className="text-xs text-gray-500">
+                      ({Math.round(attachment.size / 1024)} KB)
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 w-6 p-0"
+                      onClick={() => {
+                        // Open file in new tab if it's a PDF or image
+                        if (attachment.type === 'application/pdf' || attachment.type.startsWith('image/')) {
+                          const url = URL.createObjectURL(attachment.file);
+                          window.open(url, '_blank');
+                        } else {
+                          // Download the file
+                          const url = URL.createObjectURL(attachment.file);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = attachment.name;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }
+                      }}
+                    >
+                      <Eye className="h-3 w-3" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Remove Attachment?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to remove "{attachment.name}"? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleAttachmentDelete(phase, item.key, attachment.id)}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Remove
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-xs text-gray-600">Unit</Label>
-                  <Select
-                    value={itemData.material.unit}
-                    onValueChange={(value) => handleInputChange(phase, item.key, 'material', 'unit', value)}
-                  >
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {unitTypes.map(unit => (
-                        <SelectItem key={unit.value} value={unit.value}>
-                          {unit.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label className="text-xs text-gray-600">Rate per Unit</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={itemData.material.ratePerUnit}
-                    onChange={(e) => handleInputChange(phase, item.key, 'material', 'ratePerUnit', e.target.value)}
-                    placeholder="0.00"
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-gray-600">Waste %</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={itemData.material.waste}
-                    onChange={(e) => handleInputChange(phase, item.key, 'material', 'waste', e.target.value)}
-                    placeholder="5"
-                    className="h-8 text-sm"
-                  />
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-sm text-gray-600">Material Total: </span>
-                <span className="font-semibold text-green-600">
-                  ${itemData.material.total.toFixed(2)}
-                </span>
-              </div>
+              ))}
             </div>
-          </div>
+          ) : (
+            <p className="text-sm text-gray-500 italic">No quote attachments yet. Click "Attach Quote" to add one.</p>
+          )}
         </div>
+
+        {/* Labor and Material Breakdown - Only for In-House contractors */}
+        {itemData.contractor.type === 'in-house' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Labor Section */}
+            <div className="border border-gray-200 rounded p-3">
+              <h5 className="font-semibold text-gray-800 mb-3 flex items-center">
+                <Hammer className="h-4 w-4 mr-2 text-blue-600" />
+                Labor
+              </h5>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs text-gray-600">Quantity</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={itemData.labor.quantity}
+                      onChange={(e) => handleInputChange(phase, item.key, 'labor', 'quantity', e.target.value)}
+                      placeholder="0"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600">Unit</Label>
+                    <Select
+                      value={itemData.labor.unit}
+                      onValueChange={(value) => handleInputChange(phase, item.key, 'labor', 'unit', value)}
+                    >
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {unitTypes.map(unit => (
+                          <SelectItem key={unit.value} value={unit.value}>
+                            {unit.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs text-gray-600">Rate per Unit</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={itemData.labor.ratePerUnit}
+                      onChange={(e) => handleInputChange(phase, item.key, 'labor', 'ratePerUnit', e.target.value)}
+                      placeholder="0.00"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600">Waste %</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={itemData.labor.waste}
+                      onChange={(e) => handleInputChange(phase, item.key, 'labor', 'waste', e.target.value)}
+                      placeholder="5"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm text-gray-600">Labor Total: </span>
+                  <span className="font-semibold text-blue-600">
+                    ${(itemData.labor.total || 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Material Section */}
+            <div className="border border-gray-200 rounded p-3">
+              <h5 className="font-semibold text-gray-800 mb-3 flex items-center">
+                <Building className="h-4 w-4 mr-2 text-green-600" />
+                Material
+              </h5>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs text-gray-600">Quantity</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={itemData.material.quantity}
+                      onChange={(e) => handleInputChange(phase, item.key, 'material', 'quantity', e.target.value)}
+                      placeholder="0"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600">Unit</Label>
+                    <Select
+                      value={itemData.material.unit}
+                      onValueChange={(value) => handleInputChange(phase, item.key, 'material', 'unit', value)}
+                    >
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {unitTypes.map(unit => (
+                          <SelectItem key={unit.value} value={unit.value}>
+                            {unit.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs text-gray-600">Rate per Unit</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={itemData.material.ratePerUnit}
+                      onChange={(e) => handleInputChange(phase, item.key, 'material', 'ratePerUnit', e.target.value)}
+                      placeholder="0.00"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-600">Waste %</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={itemData.material.waste}
+                      onChange={(e) => handleInputChange(phase, item.key, 'material', 'waste', e.target.value)}
+                      placeholder="5"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm text-gray-600">Material Total: </span>
+                  <span className="font-semibold text-green-600">
+                    ${(itemData.material.total || 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Subcontractor Total - Only for Subcontractors */}
+        {itemData.contractor.type === 'subcontractor' && (
+          <div className="border border-gray-200 rounded p-4 bg-gray-50">
+            <h5 className="font-semibold text-gray-800 mb-3 flex items-center">
+              <DollarSign className="h-4 w-4 mr-2 text-green-600" />
+              Subcontractor Quote
+            </h5>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                ${(itemData.contractor.quoteAmount || 0).toFixed(2)}
+              </div>
+              <p className="text-sm text-gray-600 mt-1">Total Quote Amount</p>
+            </div>
+          </div>
+        )}
 
         {/* Notes */}
         <div className="mt-4">
@@ -621,7 +864,7 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
   // Render trade category
   const renderTradeCategory = (phaseKey, category) => {
     const Icon = category.icon;
-    const phaseData = financials?.phases?.[phaseKey];
+    const phaseData = safeFinancials?.phases?.[phaseKey];
     
     // Safety check - if phase data doesn't exist, return null
     if (!phaseData) {
@@ -640,7 +883,7 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
             <div className="text-right">
               <div className="text-sm text-gray-500">Phase Total</div>
               <div className="text-xl font-bold text-brandSecondary">
-                ${phaseData.total.toFixed(2)}
+                ${(phaseData.total || 0).toFixed(2)}
               </div>
             </div>
           </CardTitle>
@@ -687,6 +930,18 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
       </div>
     );
   }
+
+  // Ensure all phases have proper structure
+  const safeFinancials = {
+    ...financials,
+    phases: Object.keys(tradeCategories).reduce((acc, phaseKey) => {
+      acc[phaseKey] = {
+        items: financials.phases[phaseKey]?.items || {},
+        total: financials.phases[phaseKey]?.total || 0
+      };
+      return acc;
+    }, {})
+  };
 
   return (
     <>
@@ -736,12 +991,12 @@ const ResidentialConstructionEstimateTab = ({ job, onUpdateJob }) => {
             <CardContent className="space-y-4">
               {/* Phase Totals */}
               {Object.entries(tradeCategories).map(([phaseKey, category]) => {
-                const phaseData = financials?.phases?.[phaseKey];
+                const phaseData = safeFinancials?.phases?.[phaseKey];
                 if (!phaseData) return null;
                 return (
                   <div key={phaseKey} className="flex justify-between items-center py-2">
                     <span className="text-gray-700">{category.name}:</span>
-                    <span className="font-semibold">${phaseData.total.toFixed(2)}</span>
+                    <span className="font-semibold">${(phaseData.total || 0).toFixed(2)}</span>
                   </div>
                 );
               })}

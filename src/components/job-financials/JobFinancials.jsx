@@ -8,7 +8,7 @@ import FieldRevisedTab from './FieldRevisedTab';
 import ActualTab from './ActualTab';
 import OverviewTab from './OverviewTab';
 
-const JobFinancials = ({ job, onUpdateJob, disableAutoSyncTemporarily, forceRecalculateLaborCosts }) => {
+const JobFinancials = ({ job, onUpdateJob, disableAutoSyncTemporarily, forceRecalculateLaborCosts, employees }) => {
   const [activeTab, setActiveTab] = useState('estimate');
 
   return (
@@ -29,7 +29,7 @@ const JobFinancials = ({ job, onUpdateJob, disableAutoSyncTemporarily, forceReca
           {job?.jobType === 'commercial' ? (
             <CommercialEstimateTab job={job} onUpdateJob={onUpdateJob} />
           ) : job?.jobType === 'residential-construction' ? (
-            <ResidentialConstructionEstimateTab job={job} onUpdateJob={onUpdateJob} />
+            <ResidentialConstructionEstimateTab job={job} onUpdateJob={onUpdateJob} employees={employees} />
           ) : (
             <EstimateTab job={job} onUpdateJob={onUpdateJob} />
           )}

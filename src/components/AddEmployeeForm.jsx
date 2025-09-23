@@ -211,7 +211,8 @@ const AddEmployeeForm = ({ onSubmit, onCancel }) => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Employee">Employee</SelectItem>
-                        <SelectItem value="1099 Contractor">1099 Contractor</SelectItem>
+                        <SelectItem value="1099 In-House Contractor">1099 In-House Contractor</SelectItem>
+                        <SelectItem value="Subcontractor">Subcontractor</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

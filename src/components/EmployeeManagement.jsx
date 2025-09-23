@@ -99,10 +99,6 @@ const EmployeeManagement = ({
   // Filter employees based on filterType
   const filteredEmployees = employees.filter(employee => {
     if (filterType === 'all') return true;
-    // Handle crew type filtering
-    if (filterType === 'Drywall Crew' || filterType === 'Framing Crew' || filterType === 'Finishing Crew' || filterType === 'General Labor' || filterType === 'Management') {
-      return employee.crewType === filterType;
-    }
     // Handle employee type filtering
     return employee.employeeType === filterType;
   });

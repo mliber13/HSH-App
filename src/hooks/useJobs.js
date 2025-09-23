@@ -2737,12 +2737,28 @@ export function useJobs() {
     setJobs(prevJobs => {
       const updatedJobs = prevJobs.map(job => {
         if (job.id === jobId) {
+          // Find the document being deleted to check if it's a financials attachment
+          const documentToDelete = (job.documents || []).find(doc => doc.id === documentId);
+          
           const documents = (job.documents || []).filter(doc => doc.id !== documentId);
-          return {
+          
+          let updatedJob = {
             ...job,
             documents,
             updatedAt: new Date().toISOString()
           };
+          
+          // If this is a financials attachment, also remove it from the financials
+          if (documentToDelete && documentToDelete.source === 'financials' && documentToDelete.financialsData) {
+            const { phase, itemKey } = documentToDelete.financialsData;
+            
+            if (updatedJob.financials?.residentialConstruction?.phases?.[phase]?.items?.[itemKey]?.contractor?.attachments) {
+              updatedJob.financials.residentialConstruction.phases[phase].items[itemKey].contractor.attachments = 
+                updatedJob.financials.residentialConstruction.phases[phase].items[itemKey].contractor.attachments.filter(att => att.id !== documentId);
+            }
+          }
+          
+          return updatedJob;
         }
         return job;
       });
