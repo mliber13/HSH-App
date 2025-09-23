@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EstimateTab from './EstimateTab';
 import CommercialEstimateTab from './CommercialEstimateTab';
 import ResidentialConstructionEstimateTab from './ResidentialConstructionEstimateTab';
+import ResidentialConstructionActualTab from './ResidentialConstructionActualTab';
+import ResidentialConstructionOverviewTab from './ResidentialConstructionOverviewTab';
 import FieldRevisedTab from './FieldRevisedTab';
 import ActualTab from './ActualTab';
 import OverviewTab from './OverviewTab';
@@ -51,11 +53,19 @@ const JobFinancials = ({ job, onUpdateJob, disableAutoSyncTemporarily, forceReca
         )}
 
         <TabsContent value="actual" className="space-y-6">
-          <ActualTab job={job} onUpdateJob={onUpdateJob} disableAutoSyncTemporarily={disableAutoSyncTemporarily} forceRecalculateLaborCosts={forceRecalculateLaborCosts} />
+          {job?.jobType === 'residential-construction' ? (
+            <ResidentialConstructionActualTab job={job} onUpdateJob={onUpdateJob} employees={employees} />
+          ) : (
+            <ActualTab job={job} onUpdateJob={onUpdateJob} disableAutoSyncTemporarily={disableAutoSyncTemporarily} forceRecalculateLaborCosts={forceRecalculateLaborCosts} />
+          )}
         </TabsContent>
 
         <TabsContent value="overview" className="space-y-6">
-          <OverviewTab job={job} onUpdateJob={onUpdateJob} />
+          {job?.jobType === 'residential-construction' ? (
+            <ResidentialConstructionOverviewTab job={job} onUpdateJob={onUpdateJob} />
+          ) : (
+            <OverviewTab job={job} onUpdateJob={onUpdateJob} />
+          )}
         </TabsContent>
       </Tabs>
     </motion.div>
