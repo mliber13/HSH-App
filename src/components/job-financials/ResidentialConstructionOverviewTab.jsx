@@ -1,9 +1,76 @@
-import React, { useMemo } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, Calculator, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { DollarSign, TrendingUp, TrendingDown, Calculator, FileText, AlertTriangle, CheckCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 const ResidentialConstructionOverviewTab = ({ job, onUpdateJob }) => {
+  const [expandedCategories, setExpandedCategories] = useState({});
+
+  // Trade categories structure (matching Estimate tab)
+  const tradeCategories = {
+    sitework: {
+      name: 'Site Work',
+      items: [
+        { key: 'excavationEarthwork', label: 'Excavation & Earthwork' },
+        { key: 'utilities', label: 'Utilities' },
+        { key: 'sitePreparation', label: 'Site Preparation' },
+        { key: 'foundation', label: 'Foundation' },
+        { key: 'landscaping', label: 'Landscaping' }
+      ]
+    },
+    structure: {
+      name: 'Structure',
+      items: [
+        { key: 'framing', label: 'Framing' },
+        { key: 'windowsDoors', label: 'Windows & Doors' },
+        { key: 'siding', label: 'Siding' },
+        { key: 'roofing', label: 'Roofing' }
+      ]
+    },
+    mechanicals: {
+      name: 'Mechanicals',
+      items: [
+        { key: 'electrical', label: 'Electrical' },
+        { key: 'hvac', label: 'HVAC' },
+        { key: 'plumbing', label: 'Plumbing' }
+      ]
+    },
+    insulation: {
+      name: 'Insulation',
+      items: [
+        { key: 'wallInsulation', label: 'Wall Insulation' },
+        { key: 'ceilingInsulation', label: 'Ceiling/Attic Insulation' },
+        { key: 'floorInsulation', label: 'Floor Insulation' }
+      ]
+    },
+    finishes: {
+      name: 'Finishes',
+      items: [
+        { key: 'drywall', label: 'Drywall' },
+        { key: 'paint', label: 'Paint' },
+        { key: 'trim', label: 'Trim Work' },
+        { key: 'appliances', label: 'Appliances' },
+        { key: 'cabinets', label: 'Cabinets' },
+        { key: 'flooring', label: 'Flooring' }
+      ]
+    },
+    management: {
+      name: 'Management',
+      items: [
+        { key: 'projectManagement', label: 'Project Management' },
+        { key: 'finalWalkthrough', label: 'Final Walkthrough' }
+      ]
+    }
+  };
+
+  // Toggle category expansion
+  const toggleCategory = (categoryKey) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryKey]: !prev[categoryKey]
+    }));
+  };
+
   // Calculate estimate totals
   const estimateCalculations = useMemo(() => {
     const estimate = job?.financials?.residentialConstruction || {};
@@ -84,11 +151,56 @@ const ResidentialConstructionOverviewTab = ({ job, onUpdateJob }) => {
       const variance = actualTotal - estimateTotal;
       const variancePercentage = estimateTotal > 0 ? (variance / estimateTotal) * 100 : 0;
       
+      // Calculate item-level variances
+      const itemVariances = {};
+      const category = tradeCategories[phaseKey];
+      if (category) {
+        category.items.forEach(item => {
+          const estimateItem = job?.financials?.residentialConstruction?.phases?.[phaseKey]?.items?.[item.key];
+          const actualItem = job?.financials?.actual?.phases?.[phaseKey]?.items?.[item.key];
+          
+          let estimateAmount = 0;
+          let actualAmount = 0;
+          
+          if (estimateItem) {
+            if (estimateItem.contractor.type === 'subcontractor') {
+              estimateAmount = parseFloat(estimateItem.contractor.quoteAmount) || 0;
+            } else {
+              const laborTotal = (estimateItem.labor.quantity || 0) * (estimateItem.labor.ratePerUnit || 0) * (1 + (estimateItem.labor.waste || 0) / 100);
+              const materialTotal = (estimateItem.material.quantity || 0) * (estimateItem.material.ratePerUnit || 0) * (1 + (estimateItem.material.waste || 0) / 100);
+              estimateAmount = laborTotal + materialTotal;
+            }
+          }
+          
+          if (actualItem) {
+            if (actualItem.contractor.type === 'subcontractor') {
+              actualAmount = parseFloat(actualItem.contractor.quoteAmount) || 0;
+            } else {
+              const laborTotal = (actualItem.labor.quantity || 0) * (actualItem.labor.ratePerUnit || 0) * (1 + (actualItem.labor.waste || 0) / 100);
+              const materialTotal = (actualItem.material.quantity || 0) * (actualItem.material.ratePerUnit || 0) * (1 + (actualItem.material.waste || 0) / 100);
+              actualAmount = laborTotal + materialTotal;
+            }
+          }
+          
+          const itemVariance = actualAmount - estimateAmount;
+          const itemVariancePercentage = estimateAmount > 0 ? (itemVariance / estimateAmount) * 100 : 0;
+          
+          itemVariances[item.key] = {
+            label: item.label,
+            variance: itemVariance,
+            variancePercentage: itemVariancePercentage,
+            estimateAmount,
+            actualAmount
+          };
+        });
+      }
+      
       phaseVariances[phaseKey] = {
         variance,
         variancePercentage,
         estimateTotal,
-        actualTotal
+        actualTotal,
+        itemVariances
       };
     });
     
@@ -97,18 +209,16 @@ const ResidentialConstructionOverviewTab = ({ job, onUpdateJob }) => {
       variancePercentage,
       phaseVariances
     };
-  }, [estimateCalculations, actualCalculations]);
+  }, [estimateCalculations, actualCalculations, job?.financials]);
 
-  // Trade category names
+  // Trade category names (matching Estimate tab)
   const tradeCategoryNames = {
     sitework: 'Site Work',
-    framing: 'Framing',
-    electrical: 'Electrical',
-    plumbing: 'Plumbing',
-    hvac: 'HVAC',
-    drywall: 'Drywall',
-    flooring: 'Flooring',
-    finish: 'Finish Work'
+    structure: 'Structure',
+    mechanicals: 'Mechanicals',
+    insulation: 'Insulation',
+    finishes: 'Finishes',
+    management: 'Management'
   };
 
   // Get variance color and icon
@@ -216,13 +326,21 @@ const ResidentialConstructionOverviewTab = ({ job, onUpdateJob }) => {
               
               const varianceDisplay = getVarianceDisplay(phaseVariance.variance, phaseVariance.variancePercentage);
               const VarianceIcon = varianceDisplay.icon;
+              const isExpanded = expandedCategories[phaseKey];
+              const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
               
               return (
                 <div key={phaseKey} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-gray-800">
-                      {tradeCategoryNames[phaseKey]}
-                    </h4>
+                  <div 
+                    className="flex items-center justify-between mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                    onClick={() => toggleCategory(phaseKey)}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <ChevronIcon className="h-4 w-4 text-gray-500" />
+                      <h4 className="font-semibold text-gray-800">
+                        {tradeCategoryNames[phaseKey]}
+                      </h4>
+                    </div>
                     <div className="flex items-center space-x-2">
                       <VarianceIcon className={`h-4 w-4 ${varianceDisplay.color}`} />
                       <Badge className={`${varianceDisplay.bgColor} ${varianceDisplay.color} border-0`}>
@@ -255,6 +373,42 @@ const ResidentialConstructionOverviewTab = ({ job, onUpdateJob }) => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Expandable Item Breakdown */}
+                  {isExpanded && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <h5 className="text-sm font-medium text-gray-700 mb-3">Item Breakdown:</h5>
+                      <div className="space-y-2">
+                        {Object.values(phaseVariance.itemVariances || {}).map((itemVariance, index) => {
+                          const itemVarianceDisplay = getVarianceDisplay(itemVariance.variance, itemVariance.variancePercentage);
+                          const ItemVarianceIcon = itemVarianceDisplay.icon;
+                          
+                          return (
+                            <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                              <span className="text-gray-700">{itemVariance.label}</span>
+                              <div className="flex items-center space-x-3">
+                                <span className="text-blue-600 font-medium">
+                                  ${itemVariance.estimateAmount.toFixed(2)}
+                                </span>
+                                <span className="text-green-600 font-medium">
+                                  ${itemVariance.actualAmount.toFixed(2)}
+                                </span>
+                                <div className="flex items-center space-x-1">
+                                  <ItemVarianceIcon className={`h-3 w-3 ${itemVarianceDisplay.color}`} />
+                                  <span className={`font-medium ${itemVarianceDisplay.color}`}>
+                                    ${Math.abs(itemVariance.variance).toFixed(2)}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    ({itemVariance.variancePercentage.toFixed(1)}%)
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

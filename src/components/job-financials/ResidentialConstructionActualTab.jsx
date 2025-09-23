@@ -40,92 +40,93 @@ const ResidentialConstructionActualTab = ({ job, onUpdateJob, employees = [] }) 
 
   const actualFinancials = initializeActualFinancials();
 
-  // Trade categories for residential construction
+  // Trade categories for residential construction (matching Estimate tab exactly)
   const tradeCategories = {
     sitework: {
       name: 'Site Work',
-      icon: Home,
-      items: [
-        { key: 'excavation', name: 'Excavation', defaultUnit: 'cy' },
-        { key: 'foundation', name: 'Foundation', defaultUnit: 'cy' },
-        { key: 'backfill', name: 'Backfill', defaultUnit: 'cy' },
-        { key: 'grading', name: 'Grading', defaultUnit: 'sf' }
-      ]
-    },
-    framing: {
-      name: 'Framing',
-      icon: Hammer,
-      items: [
-        { key: 'framing', name: 'Framing', defaultUnit: 'sf' },
-        { key: 'sheathing', name: 'Sheathing', defaultUnit: 'sf' },
-        { key: 'roofing', name: 'Roofing', defaultUnit: 'sf' },
-        { key: 'siding', name: 'Siding', defaultUnit: 'sf' }
-      ]
-    },
-    electrical: {
-      name: 'Electrical',
-      icon: Zap,
-      items: [
-        { key: 'rough_electrical', name: 'Rough Electrical', defaultUnit: 'ea' },
-        { key: 'fixtures', name: 'Fixtures', defaultUnit: 'ea' },
-        { key: 'outlets', name: 'Outlets & Switches', defaultUnit: 'ea' }
-      ]
-    },
-    plumbing: {
-      name: 'Plumbing',
-      icon: Droplets,
-      items: [
-        { key: 'rough_plumbing', name: 'Rough Plumbing', defaultUnit: 'ea' },
-        { key: 'fixtures', name: 'Plumbing Fixtures', defaultUnit: 'ea' },
-        { key: 'water_heater', name: 'Water Heater', defaultUnit: 'ea' }
-      ]
-    },
-    hvac: {
-      name: 'HVAC',
-      icon: Wind,
-      items: [
-        { key: 'ductwork', name: 'Ductwork', defaultUnit: 'ea' },
-        { key: 'equipment', name: 'HVAC Equipment', defaultUnit: 'ea' },
-        { key: 'vents', name: 'Vents & Registers', defaultUnit: 'ea' }
-      ]
-    },
-    drywall: {
-      name: 'Drywall',
       icon: Building,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200',
       items: [
-        { key: 'hanging', name: 'Hanging', defaultUnit: 'sf' },
-        { key: 'finishing', name: 'Finishing', defaultUnit: 'sf' },
-        { key: 'texture', name: 'Texture', defaultUnit: 'sf' }
+        { key: 'excavationEarthwork', label: 'Excavation & Earthwork', defaultUnit: 'sqft' },
+        { key: 'utilities', label: 'Utilities', defaultUnit: 'lf' },
+        { key: 'sitePreparation', label: 'Site Preparation', defaultUnit: 'sqft' },
+        { key: 'foundation', label: 'Foundation', defaultUnit: 'sqft' },
+        { key: 'landscaping', label: 'Landscaping', defaultUnit: 'sqft' }
       ]
     },
-    flooring: {
-      name: 'Flooring',
-      icon: Home,
+    structure: {
+      name: 'Structure',
+      icon: Hammer,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
       items: [
-        { key: 'hardwood', name: 'Hardwood', defaultUnit: 'sf' },
-        { key: 'tile', name: 'Tile', defaultUnit: 'sf' },
-        { key: 'carpet', name: 'Carpet', defaultUnit: 'sf' }
+        { key: 'framing', label: 'Framing', defaultUnit: 'sqft' },
+        { key: 'windowsDoors', label: 'Windows & Doors', defaultUnit: 'each' },
+        { key: 'siding', label: 'Siding', defaultUnit: 'sqft' },
+        { key: 'roofing', label: 'Roofing', defaultUnit: 'sqft' }
       ]
     },
-    finish: {
-      name: 'Finish Work',
+    mechanicals: {
+      name: 'Mechanicals',
       icon: Wrench,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
       items: [
-        { key: 'trim', name: 'Trim Work', defaultUnit: 'lf' },
-        { key: 'paint', name: 'Painting', defaultUnit: 'sf' },
-        { key: 'cabinets', name: 'Cabinets', defaultUnit: 'ea' }
+        { key: 'electrical', label: 'Electrical', defaultUnit: 'sqft' },
+        { key: 'hvac', label: 'HVAC', defaultUnit: 'sqft' },
+        { key: 'plumbing', label: 'Plumbing', defaultUnit: 'sqft' }
+      ]
+    },
+    insulation: {
+      name: 'Insulation',
+      icon: Home,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200',
+      items: [
+        { key: 'wallInsulation', label: 'Wall Insulation', defaultUnit: 'sqft' },
+        { key: 'ceilingInsulation', label: 'Ceiling/Attic Insulation', defaultUnit: 'sqft' },
+        { key: 'floorInsulation', label: 'Floor Insulation', defaultUnit: 'sqft' }
+      ]
+    },
+    finishes: {
+      name: 'Finishes',
+      icon: Home,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200',
+      items: [
+        { key: 'drywall', label: 'Drywall', defaultUnit: 'sqft' },
+        { key: 'paint', label: 'Paint', defaultUnit: 'sqft' },
+        { key: 'trim', label: 'Trim Work', defaultUnit: 'lf' },
+        { key: 'appliances', label: 'Appliances', defaultUnit: 'each' },
+        { key: 'cabinets', label: 'Cabinets', defaultUnit: 'lf' },
+        { key: 'flooring', label: 'Flooring', defaultUnit: 'sqft' }
+      ]
+    },
+    management: {
+      name: 'Management',
+      icon: Calculator,
+      color: 'text-gray-600',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
+      items: [
+        { key: 'projectManagement', label: 'Project Management', defaultUnit: 'hours' },
+        { key: 'finalWalkthrough', label: 'Final Walkthrough', defaultUnit: 'hours' }
       ]
     }
   };
 
-  // Unit types
+  // Unit types (matching Estimate tab)
   const unitTypes = [
-    { value: 'sf', label: 'SF (Square Feet)' },
+    { value: 'sqft', label: 'SF (Square Feet)' },
     { value: 'lf', label: 'LF (Linear Feet)' },
-    { value: 'cy', label: 'CY (Cubic Yards)' },
-    { value: 'ea', label: 'EA (Each)' },
-    { value: 'hr', label: 'HR (Hours)' },
-    { value: 'day', label: 'Day' }
+    { value: 'each', label: 'EA (Each)' },
+    { value: 'hours', label: 'HR (Hours)' }
   ];
 
   // Initialize phase data if it doesn't exist
@@ -262,7 +263,7 @@ const ResidentialConstructionActualTab = ({ job, onUpdateJob, employees = [] }) 
     return (
       <div key={item.key} className="border border-gray-200 rounded-lg p-4 space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="font-semibold text-gray-800">{item.name}</h4>
+          <h4 className="font-semibold text-gray-800">{item.label}</h4>
           <div className="text-right">
             <div className="text-lg font-bold text-green-600">
               ${(itemData.total || 0).toFixed(2)}
@@ -326,17 +327,8 @@ const ResidentialConstructionActualTab = ({ job, onUpdateJob, employees = [] }) 
           </div>
         </div>
 
-        {/* Quote Information */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-3 bg-blue-50 rounded">
-          <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={itemData.contractor.quoteReceived}
-              onChange={(e) => handleContractorChange(phase, item.key, 'quoteReceived', e.target.checked)}
-              className="rounded"
-            />
-            <Label className="text-sm font-medium text-gray-700">Quote Received</Label>
-          </div>
+        {/* Actual Cost Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 p-3 bg-blue-50 rounded">
           <div>
             <Label className="text-sm font-medium text-gray-700">Actual Amount</Label>
             <Input
@@ -611,13 +603,13 @@ const ResidentialConstructionActualTab = ({ job, onUpdateJob, employees = [] }) 
 
       {/* Trade Categories */}
       <Tabs value={activeTrade} onValueChange={setActiveTrade}>
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6">
           {Object.entries(tradeCategories).map(([key, category]) => {
             const Icon = category.icon;
             return (
-              <TabsTrigger key={key} value={key} className="text-xs">
-                <Icon className="h-4 w-4 mr-1" />
-                {category.name}
+              <TabsTrigger key={key} value={key} className="flex items-center space-x-2">
+                <Icon className="h-4 w-4" />
+                <span className="hidden lg:inline">{category.name}</span>
               </TabsTrigger>
             );
           })}

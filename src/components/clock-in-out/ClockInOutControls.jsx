@@ -38,6 +38,8 @@ const ClockInOutControls = ({
   const [currentLocation, setCurrentLocation] = useState(null);
   const [locationValidation, setLocationValidation] = useState(null);
   const [selectedCoat, setSelectedCoat] = useState('');
+  const [selectedTrade, setSelectedTrade] = useState('');
+  const [selectedPhase, setSelectedPhase] = useState('');
 
 
   
@@ -46,10 +48,25 @@ const ClockInOutControls = ({
   const selectedEmployeeData = employees.find(emp => emp.id === selectedEmployee);
   const selectedJobData = jobs.find(job => job.id === selectedJob);
 
+  // Check if this is a GC job
+  const isGCJob = selectedJobData?.jobType === 'residential-construction';
+
   // Get available coats for finishers
   const availableCoats = selectedEmployeeData?.role === 'Finisher' 
     ? getAvailableCoats(selectedJob, selectedEmployee, allJobs)
     : [];
+
+  // Trade categories for GC jobs
+  const tradeCategories = {
+    'Site Work': ['Excavation', 'Utilities', 'Foundation', 'Grading'],
+    'Structure': ['Framing', 'Roofing', 'Siding', 'Windows/Doors'],
+    'Mechanicals': ['Electrical', 'HVAC', 'Plumbing', 'Insulation'],
+    'Finishes': ['Drywall', 'Paint', 'Trim', 'Flooring', 'Cabinets'],
+    'Management': ['Project Management', 'Supervision', 'Quality Control']
+  };
+
+  // Phase options for GC jobs
+  const phaseOptions = ['Site Work', 'Structure', 'Mechanicals', 'Finishes', 'Management'];
 
   // Location tracking functions
   const handleGetCurrentLocation = async () => {
@@ -93,6 +110,9 @@ const ClockInOutControls = ({
     console.log('selectedJob:', selectedJob);
     console.log('workType:', workType);
     console.log('selectedEmployeeData:', selectedEmployeeData);
+    console.log('isGCJob:', isGCJob);
+    console.log('selectedTrade:', selectedTrade);
+    console.log('selectedPhase:', selectedPhase);
     
     if (!selectedEmployee || !selectedJob) {
       toast({
@@ -103,9 +123,24 @@ const ClockInOutControls = ({
       return;
     }
 
+    // For GC jobs, require trade selection
+    if (isGCJob && !selectedTrade) {
+      toast({
+        title: "Missing Trade Information",
+        description: "Please select a trade for this work.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       if (workType === 'hourly') {
-        await clockIn(selectedEmployee, selectedJob);
+        // For GC jobs, include trade and phase data
+        const clockInData = isGCJob ? {
+          trade: selectedTrade,
+          phase: selectedPhase
+        } : {};
+        await clockIn(selectedEmployee, selectedJob, clockInData);
       } else {
         // Handle piece rate punch-in
         if (selectedEmployeeData?.role === 'Finisher') {
@@ -117,9 +152,19 @@ const ClockInOutControls = ({
             });
             return;
           }
-          await punchInPieceRate(selectedEmployee, selectedJob, selectedCoat);
+          // For GC jobs, include trade and phase data
+          const pieceRateData = isGCJob ? {
+            trade: selectedTrade,
+            phase: selectedPhase
+          } : {};
+          await punchInPieceRate(selectedEmployee, selectedJob, selectedCoat, pieceRateData);
         } else if (selectedEmployeeData?.role === 'Hanger') {
-          await punchInPieceRate(selectedEmployee, selectedJob, 'hang');
+          // For GC jobs, include trade and phase data
+          const pieceRateData = isGCJob ? {
+            trade: selectedTrade,
+            phase: selectedPhase
+          } : {};
+          await punchInPieceRate(selectedEmployee, selectedJob, 'hang', pieceRateData);
         } else {
           toast({
             title: "Invalid Role for Piece Rate",
@@ -281,6 +326,50 @@ const ClockInOutControls = ({
         )}
       </div>
 
+      {/* Trade and Phase Selection for GC Jobs */}
+      {isGCJob && !isCurrentlyWorking && (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Trade *</Label>
+            <Select value={selectedTrade} onValueChange={setSelectedTrade}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a trade" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(tradeCategories).map(([category, trades]) => (
+                  <div key={category}>
+                    <div className="px-2 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {category}
+                    </div>
+                    {trades.map((trade) => (
+                      <SelectItem key={trade} value={trade}>
+                        {trade}
+                      </SelectItem>
+                    ))}
+                  </div>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Phase (Optional)</Label>
+            <Select value={selectedPhase} onValueChange={setSelectedPhase}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a phase" />
+              </SelectTrigger>
+              <SelectContent>
+                {phaseOptions.map((phase) => (
+                  <SelectItem key={phase} value={phase}>
+                    {phase}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+
       {/* Coat Selection for Finishers */}
       {workType === 'piece-rate' && selectedEmployeeData?.role === 'Finisher' && !isCurrentlyWorking && (
         <div className="space-y-2">
@@ -314,7 +403,7 @@ const ClockInOutControls = ({
       {/* Clock In Button */}
       <Button
         onClick={handleClockIn}
-        disabled={isCurrentlyWorking || !selectedEmployee || !selectedJob || (workType === 'piece-rate' && selectedEmployeeData?.role === 'Finisher' && !selectedCoat)}
+        disabled={isCurrentlyWorking || !selectedEmployee || !selectedJob || (workType === 'piece-rate' && selectedEmployeeData?.role === 'Finisher' && !selectedCoat) || (isGCJob && !selectedTrade)}
         className="w-full bg-green-600 hover:bg-green-700 text-white"
       >
         <Play className="h-4 w-4 mr-2" />

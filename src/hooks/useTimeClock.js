@@ -263,7 +263,7 @@ export function useTimeClock() {
     if (callback) callback();
   }, []);
 
-  const clockIn = useCallback((employeeId, jobId, callback) => {
+  const clockIn = useCallback((employeeId, jobId, additionalData = {}, callback) => {
     const employee = employees.find(emp => emp.id === employeeId);
     if (!employee) {
       toast({
@@ -319,6 +319,8 @@ export function useTimeClock() {
       totalHours: 0,
       notes: '',
       entryType: 'hourly',
+      trade: additionalData.trade || null,
+      phase: additionalData.phase || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -499,7 +501,7 @@ export function useTimeClock() {
     return Math.max(0, 100 - totalProgress);
   }, [getJobCoatProgress]);
 
-  const punchInPieceRate = useCallback((employeeId, jobId, coat, callback) => {
+  const punchInPieceRate = useCallback((employeeId, jobId, coat, additionalData = {}, callback) => {
     console.log('=== PUNCH IN PIECE RATE CALLED ===');
     console.log('employeeId:', employeeId);
     console.log('jobId:', jobId);
@@ -655,6 +657,8 @@ export function useTimeClock() {
       apprenticeHours: 0,
       apprenticeCost: 0,
       notes: '',
+      trade: additionalData.trade || null,
+      phase: additionalData.phase || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };

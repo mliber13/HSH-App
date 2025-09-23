@@ -82,6 +82,7 @@ export function useJobs() {
   // Pure function to calculate labor costs for a single job
   const calculateLaborCostsForSingleJob = useCallback((job, allTimeEntries, allPieceRateEntries, allEmployees) => {
     console.log(`=== LABOR COST CALCULATION FOR JOB ${job.id} ===`);
+    console.log('Job type:', job.jobType);
     console.log('All time entries passed to function:', allTimeEntries.length, allTimeEntries);
     console.log('All piece rate entries passed to function:', allPieceRateEntries.length, allPieceRateEntries);
     
@@ -89,9 +90,12 @@ export function useJobs() {
     const jobPieceRateEntries = allPieceRateEntries.filter(entry => entry.jobId === job.id && entry.status === 'completed');
     
     // Debug logging
-    console.log('Job time entries:', jobTimeEntries.length, jobTimeEntries.map(e => ({ id: e.id, employeeId: e.employeeId, jobId: e.jobId, totalHours: e.totalHours, clockOutTime: e.clockOutTime, clockInTime: e.clockInTime, notes: e.notes })));
+    console.log('Job time entries:', jobTimeEntries.length, jobTimeEntries.map(e => ({ id: e.id, employeeId: e.employeeId, jobId: e.jobId, totalHours: e.totalHours, clockOutTime: e.clockOutTime, clockInTime: e.clockInTime, notes: e.notes, trade: e.trade, phase: e.phase })));
     console.log('Job piece rate entries:', jobPieceRateEntries.length, jobPieceRateEntries.map(e => ({ id: e.id, employeeId: e.employeeId, jobId: e.jobId, totalEarnings: e.totalEarnings, status: e.status, apprenticeId: e.apprenticeId, apprenticeHours: e.apprenticeHours })));
     console.log('All piece rate entries (before filtering):', allPieceRateEntries.length, allPieceRateEntries.map(e => ({ id: e.id, employeeId: e.employeeId, jobId: e.jobId, status: e.status, totalEarnings: e.totalEarnings })));
+
+    // Check if this is a residential construction (GC) job
+    const isGCJob = job.jobType === 'residential-construction';
 
     // Calculate hourly labor costs
     const hourlyLaborCosts = [];
@@ -101,7 +105,16 @@ export function useJobs() {
       const employee = allEmployees.find(emp => emp.id === entry.employeeId);
       if (employee && entry.totalHours) {
         const cost = entry.totalHours * employee.hourlyRate;
-        const key = `hourly-${employee.firstName}-${employee.lastName}`;
+        
+        // For GC jobs, group by trade/phase if available
+        let key, description;
+        if (isGCJob && entry.trade) {
+          key = `hourly-${employee.firstName}-${employee.lastName}-${entry.trade}`;
+          description = `${employee.firstName} ${employee.lastName} - ${entry.trade} (Hourly)`;
+        } else {
+          key = `hourly-${employee.firstName}-${employee.lastName}`;
+          description = `${employee.firstName} ${employee.lastName} - Hourly Labor`;
+        }
         
         if (hourlyLaborMap.has(key)) {
           const existing = hourlyLaborMap.get(key);
@@ -110,11 +123,13 @@ export function useJobs() {
         } else {
           hourlyLaborMap.set(key, {
             id: `labor-${generateId()}`,
-            description: `${employee.firstName} ${employee.lastName} - Hourly Labor`,
+            description: description,
             amount: cost,
             hours: entry.totalHours,
             type: 'hourly',
-            employeeId: employee.id
+            employeeId: employee.id,
+            trade: entry.trade || null,
+            phase: entry.phase || null
           });
         }
       }
@@ -131,14 +146,24 @@ export function useJobs() {
     jobPieceRateEntries.forEach(entry => {
       const employee = allEmployees.find(emp => emp.id === entry.employeeId);
       if (employee && entry.totalEarnings) {
-        const workType = employee.role === 'Hanger' ? 'Hanging' : 
-                       entry.coat === 'tape' ? 'Tape Coat' :
-                       entry.coat === 'bed' ? 'Bed Coat' :
-                       entry.coat === 'skim' ? 'Skim Coat' :
-                       entry.coat === 'texture' ? 'Texture Coat' :
-                       entry.coat === 'sand' ? 'Sand Coat' : entry.coat;
+        let workType, key, description;
         
-        const key = `piece-${employee.firstName}-${employee.lastName}-${workType}`;
+        if (isGCJob) {
+          // For GC jobs, use trade from entry or employee role
+          workType = entry.trade || employee.role || 'General Work';
+          key = `piece-${employee.firstName}-${employee.lastName}-${workType}`;
+          description = `${employee.firstName} ${employee.lastName} - ${workType} (Piece Rate)`;
+        } else {
+          // For drywall subcontractor jobs, use existing logic
+          workType = employee.role === 'Hanger' ? 'Hanging' : 
+                     entry.coat === 'tape' ? 'Tape Coat' :
+                     entry.coat === 'bed' ? 'Bed Coat' :
+                     entry.coat === 'skim' ? 'Skim Coat' :
+                     entry.coat === 'texture' ? 'Texture Coat' :
+                     entry.coat === 'sand' ? 'Sand Coat' : entry.coat;
+          key = `piece-${employee.firstName}-${employee.lastName}-${workType}`;
+          description = `${employee.firstName} ${employee.lastName} - ${workType} (Piece Rate)`;
+        }
         
         if (pieceRateLaborMap.has(key)) {
           const existing = pieceRateLaborMap.get(key);
@@ -147,12 +172,14 @@ export function useJobs() {
         } else {
           pieceRateLaborMap.set(key, {
             id: `labor-${generateId()}`,
-            description: `${employee.firstName} ${employee.lastName} - ${workType} (Piece Rate)`,
+            description: description,
             amount: entry.totalEarnings,
             completionPercentage: entry.completionPercentage || 0,
             type: 'piece-rate',
             employeeId: employee.id,
-            workType: workType
+            workType: workType,
+            trade: entry.trade || null,
+            phase: entry.phase || null
           });
         }
       }
@@ -170,7 +197,15 @@ export function useJobs() {
       if (entry.apprenticeId && entry.apprenticeCost) {
         const apprentice = allEmployees.find(emp => emp.id === entry.apprenticeId);
         if (apprentice) {
-          const key = `apprentice-${apprentice.firstName}-${apprentice.lastName}`;
+          // For GC jobs, group by trade if available
+          let key, description;
+          if (isGCJob && entry.trade) {
+            key = `apprentice-${apprentice.firstName}-${apprentice.lastName}-${entry.trade}`;
+            description = `${apprentice.firstName} ${apprentice.lastName} - ${entry.trade} (Apprentice)`;
+          } else {
+            key = `apprentice-${apprentice.firstName}-${apprentice.lastName}`;
+            description = `${apprentice.firstName} ${apprentice.lastName} - Apprentice Labor`;
+          }
           
           if (apprenticeLaborMap.has(key)) {
             const existing = apprenticeLaborMap.get(key);
@@ -179,11 +214,13 @@ export function useJobs() {
           } else {
             apprenticeLaborMap.set(key, {
               id: `labor-${generateId()}`,
-              description: `${apprentice.firstName} ${apprentice.lastName} - Apprentice Labor`,
+              description: description,
               amount: entry.apprenticeCost,
               hours: entry.apprenticeHours || 0,
               type: 'apprentice',
-              employeeId: apprentice.id
+              employeeId: apprentice.id,
+              trade: entry.trade || null,
+              phase: entry.phase || null
             });
           }
         }
