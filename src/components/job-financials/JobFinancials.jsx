@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import EstimateTab from './EstimateTab';
@@ -11,6 +11,13 @@ import OverviewTab from './OverviewTab';
 const JobFinancials = ({ job, onUpdateJob, disableAutoSyncTemporarily, forceRecalculateLaborCosts, employees }) => {
   const [activeTab, setActiveTab] = useState('estimate');
 
+  // Auto-switch to estimate tab if on field-revised tab for residential construction jobs
+  useEffect(() => {
+    if (job?.jobType === 'residential-construction' && activeTab === 'field-revised') {
+      setActiveTab('estimate');
+    }
+  }, [job?.jobType, activeTab]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -18,9 +25,11 @@ const JobFinancials = ({ job, onUpdateJob, disableAutoSyncTemporarily, forceReca
       className="space-y-6"
     >
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className={`grid w-full ${job?.jobType === 'residential-construction' ? 'grid-cols-3' : 'grid-cols-4'}`}>
           <TabsTrigger value="estimate">Estimate</TabsTrigger>
-          <TabsTrigger value="field-revised">Field Revised</TabsTrigger>
+          {job?.jobType !== 'residential-construction' && (
+            <TabsTrigger value="field-revised">Field Revised</TabsTrigger>
+          )}
           <TabsTrigger value="actual">Actual</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
         </TabsList>
@@ -35,9 +44,11 @@ const JobFinancials = ({ job, onUpdateJob, disableAutoSyncTemporarily, forceReca
           )}
         </TabsContent>
 
-        <TabsContent value="field-revised" className="space-y-6">
-          <FieldRevisedTab job={job} onUpdateJob={onUpdateJob} />
-        </TabsContent>
+        {job?.jobType !== 'residential-construction' && (
+          <TabsContent value="field-revised" className="space-y-6">
+            <FieldRevisedTab job={job} onUpdateJob={onUpdateJob} />
+          </TabsContent>
+        )}
 
         <TabsContent value="actual" className="space-y-6">
           <ActualTab job={job} onUpdateJob={onUpdateJob} disableAutoSyncTemporarily={disableAutoSyncTemporarily} forceRecalculateLaborCosts={forceRecalculateLaborCosts} />
