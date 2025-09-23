@@ -130,6 +130,9 @@ const ResidentialConstructionActualTab = ({ job, onUpdateJob, employees = [] }) 
 
   // Initialize phase data if it doesn't exist
   const initializePhaseData = (phase) => {
+    if (!actualFinancials.phases) {
+      actualFinancials.phases = {};
+    }
     if (!actualFinancials.phases[phase]) {
       actualFinancials.phases[phase] = {
         items: {},
@@ -563,7 +566,8 @@ const ResidentialConstructionActualTab = ({ job, onUpdateJob, employees = [] }) 
 
   // Calculate totals
   const getCalculations = () => {
-    const totalActual = Object.values(actualFinancials.phases || {}).reduce((sum, phase) => sum + (phase.total || 0), 0);
+    const phases = actualFinancials.phases || {};
+    const totalActual = Object.values(phases).reduce((sum, phase) => sum + (phase.total || 0), 0);
     return {
       totalActual: totalActual
     };
@@ -597,7 +601,7 @@ const ResidentialConstructionActualTab = ({ job, onUpdateJob, employees = [] }) 
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <div className="text-2xl font-bold text-purple-600">
-                {Object.values(actualFinancials.phases || {}).reduce((sum, phase) => sum + Object.keys(phase.items || {}).length, 0)}
+                {Object.values(actualFinancials.phases || {}).reduce((sum, phase) => sum + Object.keys(phase?.items || {}).length, 0)}
               </div>
               <div className="text-sm text-gray-600">Total Items</div>
             </div>
