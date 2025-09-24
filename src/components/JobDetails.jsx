@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Building2, User, MapPin, Key, Plus, Hammer, Ruler, ClipboardList, Layers, Edit3, Trash2, PlusCircle, FileText, Package, Calculator, Play, Archive, DollarSign, Save, X, Home, Building, FolderOpen, Users, Send } from 'lucide-react';
+import { Building2, User, MapPin, Key, Plus, Hammer, Ruler, ClipboardList, Layers, Edit3, Trash2, PlusCircle, FileText, Package, Calculator, Play, Archive, DollarSign, Save, X, Home, Building, FolderOpen, Users, Send, Calendar, MoreHorizontal } from 'lucide-react';
 import quickbooksIntegrationService from '@/services/quickbooksIntegrationService';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { toast } from '@/components/ui/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import EditTakeoffEntryModal from '@/components/EditTakeoffEntryModal';
@@ -309,14 +310,15 @@ const JobDetails = ({
   const renderJobActions = () => {
     if (jobStatus === 'estimating') {
       return (
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={() => onUpdateJob(job.id, { status: 'active' })}
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white text-xs"
           >
             <Play className="h-3 w-3 mr-1" />
-            Start Job
+            <span className="hidden sm:inline">Start Job</span>
+            <span className="sm:hidden">Start</span>
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -326,7 +328,8 @@ const JobDetails = ({
                 className="bg-red-500 hover:bg-red-600 text-xs"
               >
                 <Trash2 className="h-3 w-3 mr-1" />
-                Delete Job
+                <span className="hidden sm:inline">Delete Job</span>
+                <span className="sm:hidden">Delete</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -349,7 +352,7 @@ const JobDetails = ({
     } else if (jobStatus === 'active') {
       // Active jobs can be set to inactive or back to estimating
       return (
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={() => onUpdateJob(job.id, { status: 'inactive' })}
             variant="outline"
@@ -357,7 +360,8 @@ const JobDetails = ({
             className="border-yellow-500 text-yellow-600 hover:bg-yellow-50 text-xs"
           >
             <Archive className="h-3 w-3 mr-1" />
-            Set Inactive
+            <span className="hidden sm:inline">Set Inactive</span>
+            <span className="sm:hidden">Inactive</span>
           </Button>
           <Button
             onClick={() => onUpdateJob(job.id, { status: 'estimating' })}
@@ -366,7 +370,8 @@ const JobDetails = ({
             className="border-blue-500 text-blue-600 hover:bg-blue-50 text-xs"
           >
             <Calculator className="h-3 w-3 mr-1" />
-            Back to Estimating
+            <span className="hidden sm:inline">Back to Estimating</span>
+            <span className="sm:hidden">Estimating</span>
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -376,7 +381,8 @@ const JobDetails = ({
                 className="bg-red-500 hover:bg-red-600 text-xs"
               >
                 <Trash2 className="h-3 w-3 mr-1" />
-                Delete Job
+                <span className="hidden sm:inline">Delete Job</span>
+                <span className="sm:hidden">Delete</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -399,14 +405,15 @@ const JobDetails = ({
     } else {
       // Inactive jobs can be reactivated or moved back to estimating
       return (
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={() => onUpdateJob(job.id, { status: 'active' })}
             size="sm"
             className="bg-green-500 hover:bg-green-600 text-white text-xs"
           >
             <Play className="h-3 w-3 mr-1" />
-            Reactivate
+            <span className="hidden sm:inline">Reactivate</span>
+            <span className="sm:hidden">Activate</span>
           </Button>
           <Button
             onClick={() => onUpdateJob(job.id, { status: 'estimating' })}
@@ -415,7 +422,8 @@ const JobDetails = ({
             className="border-blue-500 text-blue-600 hover:bg-blue-50 text-xs"
           >
             <Calculator className="h-3 w-3 mr-1" />
-            Back to Estimating
+            <span className="hidden sm:inline">Back to Estimating</span>
+            <span className="sm:hidden">Estimating</span>
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -425,7 +433,8 @@ const JobDetails = ({
                 className="bg-red-500 hover:bg-red-600 text-xs"
               >
                 <Trash2 className="h-3 w-3 mr-1" />
-                Delete Job
+                <span className="hidden sm:inline">Delete Job</span>
+                <span className="sm:hidden">Delete</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -450,29 +459,19 @@ const JobDetails = ({
 
   return (
     <div className="space-y-8">
-      {/* Add the button at the top */}
-      {onGoToScheduleForJob && job && (
-        <div className="flex justify-end">
-          <Button
-            onClick={() => onGoToScheduleForJob(job.id)}
-            className="bg-gradient-to-r from-brandPrimary to-brandSecondary text-white mb-2"
-          >
-            View Schedule for This Job
-          </Button>
-        </div>
-      )}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <Card className="border-0 bg-gradient-to-r from-brandPrimary to-brandSecondary text-white shadow-2xl">
           <CardHeader className="pb-6">
-            <div className="flex items-center justify-between">
+            {/* Mobile-first responsive layout */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
               <div className="flex items-center space-x-4">
                 <div className="p-3 bg-white/20 rounded-xl">
                   <Building2 className="h-8 w-8" />
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   {isEditingJobInfo ? (
                     <div className="space-y-2">
                       <Input
@@ -483,123 +482,124 @@ const JobDetails = ({
                       />
                     </div>
                   ) : (
-                    <CardTitle className="text-3xl font-bold">{job?.jobName}</CardTitle>
+                    <CardTitle className="text-2xl lg:text-3xl font-bold truncate">{job?.jobName}</CardTitle>
                   )}
-                  <div className="flex items-center space-x-3 mt-2">
-                    <p className="text-white/80">Construction Job Details</p>
-                    <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium ${statusDisplay.color} text-gray-800`}>
-                      <StatusIcon className="h-4 w-4" />
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <p className="text-white/80 text-sm">Construction Job Details</p>
+                    <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${statusDisplay.color} text-gray-800`}>
+                      <StatusIcon className="h-3 w-3" />
                       <span>{statusDisplay.text}</span>
                     </span>
-                    <span className={`inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium ${
+                    <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
                       jobType === 'residential' ? 'bg-green-100 text-green-800' 
                       : jobType === 'residential-construction' ? 'bg-orange-100 text-orange-800'
                       : 'bg-blue-100 text-blue-800'
                     }`}>
-                      {jobType === 'residential' || jobType === 'residential-construction' ? <Home className="h-4 w-4" /> : <Building className="h-4 w-4" />}
+                      {jobType === 'residential' || jobType === 'residential-construction' ? <Home className="h-3 w-3" /> : <Building className="h-3 w-3" />}
                       <span className="capitalize">
                         {jobType === 'residential-construction' ? 'Residential Construction' : jobType}
                       </span>
                     </span>
                     {/* QuickBooks Status Badge */}
                     {quickbooksIntegrationService.isJobSynced(job) && (
-                      <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                        <Send className="h-4 w-4" />
+                      <span className="inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <Send className="h-3 w-3" />
                         <span>QuickBooks</span>
                       </span>
                     )}
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col space-y-2">
-                {/* Primary Actions Row */}
-                <div className="flex items-center space-x-2">
-                  {!isEditingJobInfo ? (
-                    <>
-                      <Button
-                        onClick={() => setIsEditingJobInfo(true)}
-                        variant="outline"
-                        className="bg-white/10 text-white hover:bg-white/20 border-white/30"
-                      >
-                        <Edit3 className="h-4 w-4 mr-2" />
-                        Edit Job Info
-                      </Button>
-                      {/* Always show Financials and Takeoff Report buttons */}
-                      <Button
-                        onClick={onShowFinancials}
-                        variant="outline"
-                        className="bg-white/10 text-white hover:bg-white/20 border-white/30"
-                      >
-                        <DollarSign className="h-4 w-4 mr-2" />
-                        Financials
-                      </Button>
-                      {/* Only show Takeoff Report if there are takeoff phases */}
-                      {takeoffPhases.length > 0 && (
-                        <Button
-                          onClick={onShowTakeoffReport}
-                          variant="outline"
-                          className="bg-white/10 text-white hover:bg-white/20 border-white/30"
-                        >
-                          <FileText className="h-4 w-4 mr-2" />
-                          Takeoff Report
-                        </Button>
-                      )}
-                      {/* QuickBooks Setup Button - only show for active jobs that aren't synced */}
-                      {jobStatus === 'active' && !quickbooksIntegrationService.isJobSynced(job) && (
-                        <Button
-                          onClick={initializeJobInQuickBooks}
-                          disabled={initializingQuickBooks}
-                          variant="outline"
-                          className="bg-white/10 text-white hover:bg-white/20 border-white/30 border-orange-500"
-                        >
-                          <Send className="h-4 w-4 mr-2" />
-                          {initializingQuickBooks ? 'Setting up...' : 'Setup QuickBooks'}
-                        </Button>
-                      )}
-                      {/* QuickBooks Status - show for synced jobs */}
-                      {quickbooksIntegrationService.isJobSynced(job) && (
+              
+              {/* Actions - Dropdown menu for cleaner interface */}
+              <div className="flex flex-col space-y-2 lg:flex-row lg:flex-col lg:space-y-2">
+                {!isEditingJobInfo ? (
+                  <>
+                    {/* Primary Actions Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
                         <Button
                           variant="outline"
-                          className="bg-green-500/20 text-green-300 hover:bg-green-500/30 border-green-400"
-                          disabled
+                          size="sm"
+                          className="bg-white/10 text-white hover:bg-white/20 border-white/30 text-xs"
                         >
-                          <Send className="h-4 w-4 mr-2" />
-                          QuickBooks Connected
+                          <MoreHorizontal className="h-3 w-3 mr-1" />
+                          Actions
                         </Button>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        onClick={handleCancelJobEdit}
-                        variant="outline"
-                        className="bg-white/10 text-white hover:bg-white/20 border-white/30"
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSaveJobInfo}
-                        className="bg-white text-brandPrimary hover:bg-white/90"
-                      >
-                        <Save className="h-4 w-4 mr-2" />
-                        Save Changes
-                      </Button>
-                    </>
-                  )}
-                </div>
-                
-                {/* Secondary Actions Row - Smaller buttons */}
-                <div className="flex items-center space-x-2">
-                  {renderJobActions()}
-                </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem onClick={() => setIsEditingJobInfo(true)}>
+                          <Edit3 className="h-4 w-4 mr-2" />
+                          Edit Job Info
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={onShowFinancials}>
+                          <DollarSign className="h-4 w-4 mr-2" />
+                          Financials
+                        </DropdownMenuItem>
+                        {takeoffPhases.length > 0 && (
+                          <DropdownMenuItem onClick={onShowTakeoffReport}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Takeoff Report
+                          </DropdownMenuItem>
+                        )}
+                        {onGoToScheduleForJob && (
+                          <DropdownMenuItem onClick={() => onGoToScheduleForJob(job.id)}>
+                            <Calendar className="h-4 w-4 mr-2" />
+                            View Schedule
+                          </DropdownMenuItem>
+                        )}
+                        {jobStatus === 'active' && !quickbooksIntegrationService.isJobSynced(job) && (
+                          <DropdownMenuItem 
+                            onClick={initializeJobInQuickBooks}
+                            disabled={initializingQuickBooks}
+                            className="text-orange-600"
+                          >
+                            <Send className="h-4 w-4 mr-2" />
+                            {initializingQuickBooks ? 'Setting up QuickBooks...' : 'Setup QuickBooks'}
+                          </DropdownMenuItem>
+                        )}
+                        {quickbooksIntegrationService.isJobSynced(job) && (
+                          <DropdownMenuItem disabled className="text-green-600">
+                            <Send className="h-4 w-4 mr-2" />
+                            QuickBooks Connected
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    {/* Job Status Actions - Keep these as buttons since they're primary actions */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {renderJobActions()}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      onClick={handleCancelJobEdit}
+                      variant="outline"
+                      size="sm"
+                      className="bg-white/10 text-white hover:bg-white/20 border-white/30 text-xs"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleSaveJobInfo}
+                      size="sm"
+                      className="bg-white text-brandPrimary hover:bg-white/90 text-xs"
+                    >
+                      <Save className="h-3 w-3 mr-1" />
+                      Save
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </CardHeader>
           
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            <div className="flex items-center space-x-3">
-              {jobType === 'residential' ? <Home className="h-5 w-5 text-white/70" /> : <Building className="h-5 w-5 text-white/70" />}
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 lg:gap-4">
+            <div className="flex items-center space-x-2">
+              {jobType === 'residential' ? <Home className="h-4 w-4 text-white/70" /> : <Building className="h-4 w-4 text-white/70" />}
               <div>
                 <p className="text-white/70 text-sm">Job Type</p>
                 {isEditingJobInfo ? (
@@ -630,8 +630,8 @@ const JobDetails = ({
                 )}
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <User className="h-5 w-5 text-white/70" />
+            <div className="flex items-center space-x-2">
+              <User className="h-4 w-4 text-white/70" />
               <div>
                 <p className="text-white/70 text-sm">General Contractor</p>
                 {isEditingJobInfo ? (
@@ -684,8 +684,8 @@ const JobDetails = ({
                 )}
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <User className="h-5 w-5 text-white/70" />
+            <div className="flex items-center space-x-2">
+              <User className="h-4 w-4 text-white/70" />
               <div>
                 <p className="text-white/70 text-sm">Superintendent</p>
                 {isEditingJobInfo ? (
@@ -717,8 +717,8 @@ const JobDetails = ({
                 )}
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <Users className="h-5 w-5 text-white/70" />
+            <div className="flex items-center space-x-2">
+              <Users className="h-4 w-4 text-white/70" />
               <div>
                 <p className="text-white/70 text-sm">Project Manager</p>
                 {isEditingJobInfo ? (
@@ -750,8 +750,8 @@ const JobDetails = ({
                 )}
               </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <MapPin className="h-5 w-5 text-white/70" />
+            <div className="flex items-center space-x-2">
+              <MapPin className="h-4 w-4 text-white/70" />
               <div>
                 <p className="text-white/70 text-sm">Address</p>
                 {isEditingJobInfo ? (
@@ -766,19 +766,101 @@ const JobDetails = ({
                 )}
               </div>
             </div>
+            <div className="flex items-center space-x-2">
+              <Key className="h-4 w-4 text-white/70" />
+              <div>
+                <p className="text-white/70 text-sm">Lockbox Code</p>
+                {isEditingJobInfo ? (
+                  <Input
+                    value={editFormData.lockboxCode}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, lockboxCode: e.target.value }))}
+                    placeholder="Enter lockbox code"
+                    className="bg-white/20 border-white/30 text-white placeholder:text-white/70 mt-1"
+                  />
+                ) : (
+                  <p className="font-semibold">{job?.lockboxCode || 'Not specified'}</p>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
 
+      {/* Mobile Tab Navigation */}
+      <div className="lg:hidden">
+        <div className="bg-white rounded-lg shadow-sm border">
+          <div className="flex overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'overview'
+                  ? 'border-brandPrimary text-brandPrimary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <ClipboardList className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Scopes of Work</span>
+              <span className="sm:hidden">SOW</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('takeoff')}
+              className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'takeoff'
+                  ? 'border-brandPrimary text-brandPrimary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Ruler className="h-4 w-4 mr-2" />
+              Takeoffs
+            </button>
+            <button
+              onClick={() => setActiveTab('documents')}
+              className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'documents'
+                  ? 'border-brandPrimary text-brandPrimary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Documents
+            </button>
+            <button
+              onClick={() => setActiveTab('logs')}
+              className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'logs'
+                  ? 'border-brandPrimary text-brandPrimary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <ClipboardList className="h-4 w-4 mr-2" />
+              Logs
+            </button>
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`flex-shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'messages'
+                  ? 'border-brandPrimary text-brandPrimary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              Messages
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Scopes Section - Show on overview tab or desktop */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
+        className={`${activeTab === 'overview' ? 'block' : 'hidden lg:block'}`}
       >
         <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
                 <Hammer className="h-6 w-6 text-brandPrimary" />
                 <CardTitle className="text-2xl font-bold text-gray-900">Scopes of Work</CardTitle>
               </div>
@@ -827,7 +909,7 @@ const JobDetails = ({
                 <p className="text-gray-500 text-sm mt-1">Add default scopes or create a new one to get started</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {scopes.map((scope, index) => (
                   <motion.div
                     key={scope.id}
@@ -885,11 +967,12 @@ const JobDetails = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className={`${activeTab === 'takeoff' ? 'block' : 'hidden lg:block'}`}
         >
           <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
                   <Ruler className="h-6 w-6 text-brandSecondary" />
                   <CardTitle className="text-2xl font-bold text-gray-900">Field Takeoffs</CardTitle>
                   {jobType === 'commercial' && (
@@ -922,39 +1005,42 @@ const JobDetails = ({
                 <div className="space-y-6">
                   {takeoffPhases.map((phase) => (
                       <div key={phase.id} className="border rounded-lg p-4 bg-slate-50 shadow-md">
-                        <div className="flex justify-between items-center mb-4">
+                        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-4 space-y-3 lg:space-y-0">
                           <h3 className="font-bold text-xl text-gray-900 flex items-center">
                             <Layers className="h-5 w-5 mr-2 text-brandSecondary" />
                             {phase.name}
                           </h3>
                           {jobStatus === 'active' && (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex flex-wrap items-center gap-2">
                               <Button
                                 onClick={() => handleEditPhaseMaterials(phase)}
                                 size="sm"
                                 variant="outline"
-                                className="border-brandPrimary text-brandPrimary hover:bg-brandPrimary/5"
+                                className="border-brandPrimary text-brandPrimary hover:bg-brandPrimary/5 text-xs"
                               >
-                                <Package className="h-4 w-4 mr-1" />
-                                Phase Accessories
+                                <Package className="h-3 w-3 mr-1" />
+                                <span className="hidden sm:inline">Phase Accessories</span>
+                                <span className="sm:hidden">Accessories</span>
                               </Button>
                               <Button
                                 onClick={() => onAddTakeoffEntry(phase.id)}
                                 size="sm"
-                                className="bg-gradient-to-r from-brandPrimary to-brandSecondary hover:from-brandPrimary-600 hover:to-brandSecondary-600 text-white font-semibold"
+                                className="bg-gradient-to-r from-brandPrimary to-brandSecondary hover:from-brandPrimary-600 hover:to-brandSecondary-600 text-white font-semibold text-xs"
                               >
-                                <Plus className="h-4 w-4 mr-1" />
-                                Add Entries to Phase
+                                <Plus className="h-3 w-3 mr-1" />
+                                <span className="hidden sm:inline">Add Entries to Phase</span>
+                                <span className="sm:hidden">Add Entries</span>
                               </Button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="border-red-500 text-red-500 hover:bg-red-50"
+                                    className="border-red-500 text-red-500 hover:bg-red-50 text-xs"
                                   >
-                                    <Trash2 className="h-4 w-4 mr-1" />
-                                    Delete Phase
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    <span className="hidden sm:inline">Delete Phase</span>
+                                    <span className="sm:hidden">Delete</span>
                                   </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
@@ -1052,7 +1138,7 @@ const JobDetails = ({
                                   )}
                               </div>
                               
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                 {(entry.boards || []).map((board, index) => (
                                   <motion.div
                                     key={board.id || index}
@@ -1108,6 +1194,7 @@ const JobDetails = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
+        className={`${activeTab === 'documents' ? 'block' : 'hidden lg:block'}`}
       >
         <Card className="shadow-lg">
           <CardHeader>
@@ -1136,6 +1223,7 @@ const JobDetails = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
+        className={`${activeTab === 'logs' ? 'block' : 'hidden lg:block'}`}
       >
         <Card className="shadow-lg">
           <CardHeader>
@@ -1161,6 +1249,7 @@ const JobDetails = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
+        className={`${activeTab === 'messages' ? 'block' : 'hidden lg:block'}`}
       >
         <MessagesSection
           job={job}
